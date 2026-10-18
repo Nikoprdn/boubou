@@ -1,1 +1,1794 @@
+<title>Salle Opé</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+/* Layout : une salle de régulation. Files d'appels et interventions à gauche, carte du secteur au centre
+   avec la radio dessous, poste de traitement de l'appel à droite. Les quatre couleurs de service sont le seul code couleur. */
+:root {
+  --bg: #e8ecf0;
+  --panel: #fbfcfd;
+  --panel-2: #f0f3f6;
+  --ink: #16202b;
+  --muted: #5a6775;
+  --line: #d2d9e1;
+  --focus: #1d5fb8;
+  --badge-ink: #ffffff;
 
+  --s18: #c4352b;   /* Pompiers */
+  --s15: #b9730b;   /* SAMU */
+  --s17: #2259b8;   /* Police */
+  --s17g: #463e93;  /* Gendarmerie */
+  --s112: #16202b;
+
+  --good: #2c7a47;
+  --warn: #a96600;
+  --crit: #c4352b;
+
+  --map-land: #e5e9de;
+  --map-forest: #d0dbc5;
+  --map-water: #b6cddf;
+  --map-road: #ffffff;
+  --map-road-edge: #bdc4b8;
+  --map-block: #cdd2cd;
+  --map-text: #34404b;
+  --map-zone: #2259b8;
+  --shield: #f2c418;
+  --shield-ink: #1b1b1b;
+  --motorway: #c4222f;
+
+  --f-display: "Barlow Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+  --f-body: "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
+  --f-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0e1318; --panel: #151c23; --panel-2: #1b242d; --ink: #e2e8ee; --muted: #94a1ae; --line: #29343f;
+    --focus: #72a6ee; --badge-ink: #0e1318;
+    --s18: #ee6a5c; --s15: #e6a440; --s17: #6f9ef0; --s17g: #a198ea; --s112: #e2e8ee;
+    --good: #5fc282; --warn: #e5a63f; --crit: #ee6a5c;
+    --map-land: #19211c; --map-forest: #1e2b22; --map-water: #1d3243; --map-road: #3a4551; --map-road-edge: #0f1419;
+    --map-block: #2b3440; --map-text: #b8c3ce; --map-zone: #6f9ef0;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0e1318; --panel: #151c23; --panel-2: #1b242d; --ink: #e2e8ee; --muted: #94a1ae; --line: #29343f;
+  --focus: #72a6ee; --badge-ink: #0e1318;
+  --s18: #ee6a5c; --s15: #e6a440; --s17: #6f9ef0; --s17g: #a198ea; --s112: #e2e8ee;
+  --good: #5fc282; --warn: #e5a63f; --crit: #ee6a5c;
+  --map-land: #19211c; --map-forest: #1e2b22; --map-water: #1d3243; --map-road: #3a4551; --map-road-edge: #0f1419;
+  --map-block: #2b3440; --map-text: #b8c3ce; --map-zone: #6f9ef0;
+  color-scheme: dark;
+}
+
+html, body { height: 100%; }
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 14px;
+  line-height: 1.45;
+  overflow: hidden;
+}
+* { box-sizing: border-box; }
+button, select, input { font: inherit; color: inherit; }
+:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+.mono { font-family: var(--f-mono); font-variant-numeric: tabular-nums; }
+
+.app {
+  height: 100%;
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr) 410px;
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas: "head head head" "left map right";
+  gap: 12px;
+  padding-block: 12px;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+}
+
+/* ---------- En-tête ---------- */
+.head {
+  grid-area: head;
+  display: flex; align-items: center; flex-wrap: wrap; gap: 12px 24px;
+}
+.brand { display: flex; align-items: baseline; gap: 12px; min-width: 0; }
+.brand h1 {
+  margin: 0; font-family: var(--f-display); font-weight: 700; font-size: 28px; letter-spacing: 0.02em;
+  text-transform: uppercase; line-height: 1;
+}
+.brand .sector { color: var(--muted); font-size: 13px; }
+.clock { font-family: var(--f-mono); font-size: 22px; font-weight: 500; letter-spacing: 0.02em; }
+.stats { display: flex; gap: 20px; margin-left: auto; flex-wrap: wrap; }
+.stat { display: grid; gap: 0; }
+.stat .k { font-family: var(--f-display); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
+.stat .v { font-family: var(--f-mono); font-size: 16px; font-weight: 500; }
+.controls { display: flex; gap: 6px; flex-wrap: wrap; }
+
+.btn {
+  border: 1px solid var(--line); background: var(--panel); border-radius: 6px;
+  padding: 6px 12px; cursor: pointer; font-weight: 500; font-size: 13px;
+}
+.btn:hover:not(:disabled) { border-color: var(--muted); }
+.btn:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn.primary { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+.btn.primary:hover:not(:disabled) { opacity: 0.9; }
+.btn.small { padding: 3px 9px; font-size: 12px; }
+.btn[aria-pressed="true"] { background: var(--ink); color: var(--bg); border-color: var(--ink); }
+
+/* ---------- Colonnes ---------- */
+.col { min-height: 0; overflow: auto; display: grid; align-content: start; gap: 12px; }
+.left { grid-area: left; }
+.right { grid-area: right; }
+.card {
+  background: var(--panel); border: 1px solid var(--line); border-radius: 10px;
+}
+.sec-title {
+  display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 10px 14px 8px; border-bottom: 1px solid var(--line);
+  font-family: var(--f-display); font-weight: 600; font-size: 15px; text-transform: uppercase; letter-spacing: 0.08em;
+}
+.sec-title .count { font-family: var(--f-mono); font-size: 12px; color: var(--muted); letter-spacing: 0; }
+.list { display: grid; }
+.empty { padding: 14px; color: var(--muted); font-size: 13px; }
+
+.badge {
+  display: inline-grid; place-items: center; min-width: 34px; height: 24px; padding: 0 6px;
+  border-radius: 5px; font-family: var(--f-mono); font-weight: 600; font-size: 13px;
+  color: var(--badge-ink); background: var(--s112);
+}
+.badge.n18 { background: var(--s18); }
+.badge.n15 { background: var(--s15); }
+.badge.n17 { background: var(--s17); }
+.badge.n17g { background: var(--s17g); }
+
+.row {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 4px 10px; align-items: center;
+  padding: 10px 14px; border-bottom: 1px solid var(--line); cursor: pointer; text-align: left;
+  background: none; border-left: 0; border-right: 0; border-top: 0; width: 100%;
+}
+.row:last-child { border-bottom: 0; }
+.row:hover { background: var(--panel-2); }
+.row.sel { background: var(--panel-2); box-shadow: inset 3px 0 0 var(--ink); }
+.row .mid { display: grid; min-width: 0; }
+.row .t1 { display: block; font-weight: 600; font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .t2 { display: block; color: var(--muted); font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.row .side { font-family: var(--f-mono); font-size: 12px; color: var(--muted); text-align: right; }
+.row.ringing .badge { animation: ring 0.9s ease-in-out infinite; }
+.row.ringing .t1 { color: var(--crit); }
+@keyframes ring { 50% { transform: rotate(-8deg) scale(1.06); } }
+.score-pill { font-family: var(--f-mono); font-weight: 600; font-size: 12px; padding: 1px 7px; border-radius: 99px; border: 1px solid currentColor; }
+.sc-good { color: var(--good); } .sc-warn { color: var(--warn); } .sc-crit { color: var(--crit); }
+
+.chips { display: flex; flex-wrap: wrap; gap: 4px; grid-column: 2 / 4; }
+.chip { font-size: 11px; padding: 1px 6px; border-radius: 4px; background: var(--panel-2); border: 1px solid var(--line); color: var(--muted); white-space: nowrap; }
+
+/* ---------- Carte ---------- */
+.center { grid-area: map; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) 168px; gap: 12px; }
+.mapwrap { position: relative; min-height: 0; overflow: hidden; }
+#map { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: crosshair; border-radius: 10px; }
+.legend {
+  position: absolute; left: 10px; top: 10px; display: flex; flex-wrap: wrap; gap: 6px 12px; padding: 6px 10px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: 8px; font-size: 12px; max-width: calc(100% - 20px);
+}
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.sw { width: 10px; height: 10px; border-radius: 3px; display: inline-block; }
+.sw.zone { border: 1.5px dashed var(--map-zone); border-radius: 50%; background: none; }
+
+.radio { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; }
+.radio ol { list-style: none; margin: 0; padding: 4px 0; overflow: auto; min-height: 0; }
+.radio li { display: grid; grid-template-columns: 64px 40px minmax(0, 1fr); gap: 8px; padding: 3px 14px; font-size: 13px; align-items: baseline; }
+.radio li .tm { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.radio li .src { font-family: var(--f-mono); font-size: 11px; font-weight: 600; }
+.radio li.fresh { animation: flash 1.6s ease-out; }
+@keyframes flash { from { background: var(--panel-2); } }
+.src.s18 { color: var(--s18); } .src.s15 { color: var(--s15); } .src.s17 { color: var(--s17); } .src.s17g { color: var(--s17g); } .src.sys { color: var(--muted); }
+
+/* ---------- Poste de traitement ---------- */
+.pane { padding: 0; }
+.pane-head {
+  display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center;
+  padding: 12px 14px; border-bottom: 1px solid var(--line);
+}
+.eyebrow { font-family: var(--f-display); font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.pane-title { font-family: var(--f-display); font-weight: 700; font-size: 20px; line-height: 1.1; text-wrap: balance; }
+.since { font-family: var(--f-mono); font-size: 14px; }
+.block { padding: 12px 14px; border-bottom: 1px solid var(--line); display: grid; gap: 8px; }
+.block:last-child { border-bottom: 0; }
+.block h3 { margin: 0; font-family: var(--f-display); font-weight: 600; font-size: 13px; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); }
+.addr { font-weight: 600; }
+.addr .zone { font-weight: 400; color: var(--muted); font-size: 12px; margin-left: 6px; }
+
+.transcript { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; max-height: 220px; overflow: auto; }
+.transcript li { padding: 6px 10px; border-radius: 8px; font-size: 13px; max-width: 92%; }
+.transcript .op { justify-self: end; background: var(--panel-2); color: var(--muted); }
+.transcript .ap { justify-self: start; border: 1px solid var(--line); }
+.transcript .ap::before { content: "Appelant · "; font-family: var(--f-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; font-size: 11px; color: var(--muted); }
+
+.qgrid { display: grid; gap: 6px; }
+.q {
+  text-align: left; border: 1px solid var(--line); background: var(--panel); border-radius: 6px; padding: 7px 10px;
+  cursor: pointer; font-size: 13px;
+}
+.q:hover:not(:disabled) { border-color: var(--muted); }
+.q:disabled { cursor: default; color: var(--muted); background: var(--panel-2); }
+.q:disabled::before { content: "✓ "; color: var(--good); }
+.q.special { border-style: dashed; }
+
+.inline { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+select { border: 1px solid var(--line); border-radius: 6px; padding: 6px 8px; background: var(--panel); min-width: 0; flex: 1 1 200px; }
+
+.svc-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 6px; }
+.svc {
+  border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; display: grid; gap: 4px; justify-items: start; font-size: 12px;
+}
+.svc .lab { display: flex; align-items: center; gap: 6px; font-weight: 600; }
+.svc.open { border-color: var(--ink); }
+.svc .state { color: var(--muted); }
+
+.units { display: grid; gap: 10px; }
+.ugroup { display: grid; gap: 2px; }
+.ugroup .gh { font-size: 12px; font-weight: 600; display: flex; align-items: center; gap: 6px; padding-bottom: 2px; }
+.ugroup .gh .lock { font-weight: 400; color: var(--muted); }
+.unit {
+  display: grid; grid-template-columns: 18px 10px minmax(0, 1fr) auto; gap: 8px; align-items: center;
+  padding: 4px 6px; border-radius: 6px; font-size: 13px; cursor: pointer;
+}
+.unit:hover { background: var(--panel-2); }
+.unit.off { opacity: 0.5; cursor: default; }
+.unit.off:hover { background: none; }
+.unit .dot { width: 10px; height: 10px; border-radius: 50%; }
+.unit .nm { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.unit .nm small { color: var(--muted); margin-left: 6px; }
+.unit .eta { font-family: var(--f-mono); font-size: 12px; color: var(--muted); }
+.unit input { margin: 0; accent-color: var(--ink); }
+
+.actions { padding: 12px 14px; display: grid; gap: 8px; }
+.actions .inline .btn { flex: 1 1 auto; }
+.hint { margin: 0; font-size: 12px; color: var(--muted); }
+.hint.warn { color: var(--warn); }
+
+.status { font-size: 11px; padding: 1px 7px; border-radius: 99px; background: var(--panel-2); border: 1px solid var(--line); white-space: nowrap; font-weight: 500; }
+.st-surplace { border-color: var(--good); color: var(--good); }
+.st-parti, .st-transport { border-color: var(--warn); color: var(--warn); }
+.st-alerte { border-color: var(--crit); color: var(--crit); }
+
+.req { border: 1px solid var(--warn); border-radius: 8px; padding: 8px 10px; display: grid; gap: 4px; font-size: 13px; }
+.req .ok { color: var(--good); }
+
+.scorecard { display: grid; gap: 10px; }
+.total { display: flex; align-items: baseline; gap: 8px; }
+.total .num { font-family: var(--f-display); font-weight: 700; font-size: 44px; line-height: 1; }
+.total .of { color: var(--muted); font-family: var(--f-mono); }
+.total .verdict { margin-left: auto; font-family: var(--f-display); font-weight: 600; font-size: 18px; text-transform: uppercase; letter-spacing: 0.06em; }
+.bars { display: grid; gap: 6px; }
+.bar { display: grid; grid-template-columns: 150px minmax(0, 1fr) 48px; gap: 8px; align-items: center; font-size: 12px; }
+.bar .track { height: 8px; border-radius: 4px; background: var(--panel-2); border: 1px solid var(--line); overflow: hidden; }
+.bar .fill { height: 100%; background: var(--ink); }
+.bar .pts { font-family: var(--f-mono); text-align: right; color: var(--muted); }
+.notes { margin: 0; padding-left: 18px; font-size: 13px; display: grid; gap: 3px; }
+
+.idle p { margin: 0; max-width: 60ch; }
+.steps { margin: 0; padding-left: 20px; display: grid; gap: 4px; font-size: 13px; }
+.disclaimer { font-size: 12px; color: var(--muted); }
+
+@media (max-width: 1180px) {
+  .app { grid-template-columns: 270px minmax(0, 1fr) 360px; }
+}
+@media (max-width: 920px) {
+  html, body { height: auto; }
+  body { overflow: auto; }
+  .app {
+    height: auto;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto;
+    grid-template-areas: "head" "left" "right" "map";
+  }
+  .center { grid-template-rows: auto 200px; }
+  .mapwrap { aspect-ratio: 1000 / 760; max-width: 100%; }
+  .legend { font-size: 11px; gap: 4px 10px; }
+  .col { overflow: visible; }
+  .stats { margin-left: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .row.ringing .badge, .radio li.fresh { animation: none; }
+}
+</style>
+
+<div class="app" id="app">
+  <header class="head">
+    <div class="brand">
+      <h1>Salle Opé</h1>
+      <span class="sector">Nice et sa région · prototype</span>
+    </div>
+    <div class="clock" id="clock" aria-label="Heure de jeu">21:40:00</div>
+    <div class="stats">
+      <div class="stat"><span class="k">Score moyen</span><span class="v" id="st-score">–</span></div>
+      <div class="stat"><span class="k">Interventions</span><span class="v" id="st-done">0</span></div>
+      <div class="stat"><span class="k">Appels perdus</span><span class="v" id="st-lost">0</span></div>
+    </div>
+    <div class="controls">
+      <button class="btn" id="btn-pause" type="button">Pause</button>
+      <button class="btn" id="btn-speed" type="button" title="Vitesse de la simulation">Vitesse ×1</button>
+      <button class="btn" id="btn-sound" type="button" aria-pressed="false">Son</button>
+    </div>
+  </header>
+
+  <aside class="col left" aria-label="Appels et interventions">
+    <section class="card">
+      <div class="sec-title">Appels <span class="count" id="calls-count">0</span></div>
+      <div class="list" id="calls"></div>
+    </section>
+    <section class="card">
+      <div class="sec-title">Interventions <span class="count" id="inters-count">0</span></div>
+      <div class="list" id="inters"></div>
+    </section>
+  </aside>
+
+  <main class="center">
+    <div class="mapwrap card">
+      <canvas id="map" aria-label="Carte de Nice et de sa région"></canvas>
+      <div class="legend" aria-hidden="true">
+        <span><i class="sw" style="background:var(--s18)"></i>Pompiers 18</span>
+        <span><i class="sw" style="background:var(--s15)"></i>SAMU 15</span>
+        <span><i class="sw" style="background:var(--s17)"></i>Police 17</span>
+        <span><i class="sw" style="background:var(--s17g)"></i>Gendarmerie 17</span>
+        <span><i class="sw zone"></i>Zone police</span>
+      </div>
+    </div>
+    <section class="card radio" aria-label="Radio">
+      <div class="sec-title">Radio <span class="count" id="radio-count">0</span></div>
+      <ol id="radio"></ol>
+    </section>
+  </main>
+
+  <aside class="col right" aria-label="Poste de traitement">
+    <section class="card pane" id="pane"></section>
+  </aside>
+</div>
+
+<script>
+(() => {
+"use strict";
+
+/* =========================================================
+   1. Réglages
+   ========================================================= */
+const SCALE = 8;                      // 1 s réelle = 8 s de jeu (à vitesse ×1)
+const START_CLOCK = 21 * 3600 + 40 * 60;
+const RING_TIMEOUT = 480;             // l'appelant raccroche après 8 min de sonnerie (temps de jeu)
+const Q_COST = 10;                    // chaque question coûte 10 s de conversation
+const IC_COST = 15;                   // chaque interconnexion coûte 15 s
+const KM = 37;                        // unités de carte par kilomètre
+
+/* =========================================================
+   2. Le monde : Nice et sa région
+   Coordonnées réelles (approximatives), réseau routier simplifié en segments.
+   ========================================================= */
+const LON0 = 7.095, LAT0 = 43.875;
+const KX = Math.cos(43.75 * Math.PI / 180) * 111.32, KY = 110.57;
+function P(lat, lon) { return { x: (lon - LON0) * KX * KM, y: (LAT0 - lat) * KY * KM }; }
+const W = Math.round((7.43 - LON0) * KX * KM), H = Math.round((LAT0 - 43.635) * KY * KM);
+
+const STREETS = ["rue de la République", "avenue de la Gare", "place de l'Église", "chemin des Vignes", "rue du Château",
+  "avenue des Pins", "chemin du Moulin", "rue de l'Hôtel-de-Ville", "route du Village", "chemin des Oliviers",
+  "rue Pasteur", "avenue du Général-de-Gaulle", "chemin de la Colle", "impasse des Mimosas"];
+
+/* [lat, lon, nom, type, rues] — type : quartier (Nice), bourg, village, jonction */
+const RAW_NODES = {
+  // Nice, quartier par quartier
+  centre:      [43.7005, 7.2665, "Centre", "quartier", ["avenue Jean-Médecin", "rue Masséna", "boulevard Victor-Hugo", "rue de la Buffa", "rue Pastorelli"]],
+  vieux_nice:  [43.6968, 7.2763, "Vieux-Nice", "quartier", ["cours Saleya", "rue Droite", "rue de la Préfecture", "place Rossetti"]],
+  port:        [43.7010, 7.2860, "Port", "quartier", ["rue Bonaparte", "place Garibaldi", "rue Arson", "rue Cassini"]],
+  mont_boron:  [43.6995, 7.3005, "Mont-Boron", "quartier", ["boulevard Carnot", "boulevard du Mont-Boron"]],
+  liberation:  [43.7150, 7.2620, "Libération", "quartier", ["avenue Malausséna", "boulevard Gorbella", "avenue Borriglione"]],
+  cimiez:      [43.7205, 7.2760, "Cimiez", "quartier", ["boulevard de Cimiez", "avenue des Arènes-de-Cimiez", "avenue Bellanda"]],
+  pasteur:     [43.7230, 7.2880, "Pasteur", "quartier", ["route de Turin", "avenue de la République", "boulevard Pierre-Sola"]],
+  ariane:      [43.7375, 7.3010, "Ariane", "quartier", ["boulevard de l'Ariane", "avenue Émile-Ripert"]],
+  nice_nord:   [43.7290, 7.2640, "Saint-Maurice", "quartier", ["boulevard Henri-Sappia", "avenue de Pessicart", "avenue Cap-de-Croix"]],
+  gairaut:     [43.7400, 7.2520, "Gairaut", "quartier", ["route de Gairaut"]],
+  madeleine:   [43.7120, 7.2380, "La Madeleine", "quartier", ["boulevard de la Madeleine", "route de Bellet"]],
+  magnan:      [43.6945, 7.2470, "Magnan", "quartier", ["promenade des Anglais", "boulevard de la Madeleine", "avenue de la Californie"]],
+  fabron:      [43.6880, 7.2330, "Fabron", "quartier", ["boulevard Napoléon-III", "avenue de Fabron", "promenade des Anglais"]],
+  arenas:      [43.6720, 7.2180, "Arénas", "quartier", ["boulevard René-Cassin", "promenade des Anglais", "avenue de la Californie"]],
+  st_isidore:  [43.7080, 7.2040, "Saint-Isidore", "quartier", ["route de Grenoble", "boulevard du Mercantour"]],
+  // Communes
+  st_laurent:  [43.6730, 7.1880, "Saint-Laurent-du-Var", "bourg"],
+  cagnes:      [43.6640, 7.1490, "Cagnes-sur-Mer", "bourg"],
+  villeneuve:  [43.6580, 7.1220, "Villeneuve-Loubet", "bourg"],
+  st_paul:     [43.6970, 7.1220, "Saint-Paul-de-Vence", "village"],
+  vence:       [43.7225, 7.1120, "Vence", "bourg"],
+  la_gaude:    [43.7220, 7.1530, "La Gaude", "village"],
+  st_jeannet:  [43.7480, 7.1430, "Saint-Jeannet", "village"],
+  gattieres:   [43.7590, 7.1750, "Gattières", "village"],
+  carros:      [43.7880, 7.1870, "Carros", "bourg"],
+  st_martin_var: [43.8180, 7.1910, "Saint-Martin-du-Var", "village"],
+  colomars:    [43.7630, 7.2210, "Colomars", "village"],
+  aspremont:   [43.7830, 7.2440, "Aspremont", "village"],
+  levens:      [43.8590, 7.2260, "Levens", "village"],
+  tourrette:   [43.7870, 7.2770, "Tourrette-Levens", "village"],
+  falicon:     [43.7480, 7.2780, "Falicon", "village"],
+  st_andre:    [43.7335, 7.2905, "Saint-André-de-la-Roche", "village"],
+  la_trinite:  [43.7420, 7.3140, "La Trinité", "bourg"],
+  drap:        [43.7560, 7.3210, "Drap", "village"],
+  contes:      [43.8120, 7.3150, "Contes", "village"],
+  lescarene:   [43.8350, 7.3560, "L'Escarène", "village"],
+  villefranche: [43.7050, 7.3110, "Villefranche-sur-Mer", "bourg"],
+  st_jean:     [43.6890, 7.3310, "Saint-Jean-Cap-Ferrat", "village"],
+  beaulieu:    [43.7070, 7.3320, "Beaulieu-sur-Mer", "village"],
+  eze:         [43.7280, 7.3610, "Èze", "village"],
+  la_turbie:   [43.7450, 7.4000, "La Turbie", "village"],
+  cap_dail:    [43.7210, 7.4040, "Cap-d'Ail", "village"],
+  // Jonctions
+  la_manda:    [43.7720, 7.2030, "le pont de la Manda", "jonction"],
+  col_villefranche: [43.7180, 7.3030, "le col de Villefranche", "jonction"],
+  a8_villeneuve: [43.6700, 7.1240, "l'échangeur de Villeneuve-Loubet", "jonction"],
+  a8_cagnes:   [43.6800, 7.1600, "l'échangeur de Cagnes-sur-Mer", "jonction"],
+  a8_nord:     [43.7330, 7.2600, "l'échangeur de Nice-Nord", "jonction"],
+  a8_est:      [43.7290, 7.2985, "l'échangeur de Nice-Est", "jonction"],
+};
+const NODES = {};
+for (const [k, [lat, lon, name, kind, streets]] of Object.entries(RAW_NODES)) NODES[k] = { ...P(lat, lon), name, kind, streets };
+function fullName(k) { const N = NODES[k]; return N.kind === "quartier" ? `Nice (${N.name})` : N.name; }
+
+/* [a, b, nom de la voie, drapeaux] — s : cartouche de route numérotée, u : voie urbaine de Nice */
+const EDGES = [
+  ["arenas", "fabron", "promenade des Anglais", "u"], ["fabron", "magnan", "promenade des Anglais", "u"],
+  ["magnan", "centre", "promenade des Anglais", "u"], ["centre", "vieux_nice", "quai des États-Unis", "u"],
+  ["vieux_nice", "port", "quai Rauba-Capeù", "u"], ["port", "mont_boron", "boulevard Carnot", "u"],
+  ["centre", "liberation", "avenue Jean-Médecin", "u"], ["liberation", "nice_nord", "boulevard Gorbella", "u"],
+  ["liberation", "cimiez", "boulevard de Cimiez", "u"], ["cimiez", "pasteur", "boulevard de Cimiez", "u"],
+  ["port", "pasteur", "avenue de la République", "u"], ["pasteur", "ariane", "route de Turin", "u"],
+  ["magnan", "madeleine", "boulevard de la Madeleine", "u"], ["st_isidore", "madeleine", "voie Pierre-Mathis", "u"],
+  ["madeleine", "liberation", "voie Pierre-Mathis", "u"], ["liberation", "port", "voie Pierre-Mathis", "u"],
+  ["nice_nord", "gairaut", "route de Gairaut", "u"], ["nice_nord", "a8_nord", "accès A 8", "u"],
+  ["arenas", "st_isidore", "boulevard du Mercantour", "u"],
+  ["arenas", "st_laurent", "pont Napoléon-III", ""],
+  ["st_laurent", "cagnes", "bord de mer", ""], ["cagnes", "villeneuve", "bord de mer", ""],
+  ["mont_boron", "villefranche", "M 6098", "s"], ["villefranche", "beaulieu", "M 6098", "s"],
+  ["beaulieu", "cap_dail", "M 6098", "s"], ["beaulieu", "st_jean", "route du Cap-Ferrat", ""],
+  ["port", "col_villefranche", "M 6007", "s"], ["col_villefranche", "eze", "M 6007", "s"], ["eze", "cap_dail", "M 6007", "s"],
+  ["villefranche", "col_villefranche", "route du col", ""], ["eze", "la_turbie", "M 2564", "s"],
+  ["a8_villeneuve", "a8_cagnes", "A 8", "s"], ["a8_cagnes", "st_isidore", "A 8", "s"], ["st_isidore", "a8_nord", "A 8", "s"],
+  ["a8_nord", "a8_est", "A 8", "s"], ["a8_est", "la_turbie", "A 8", "s"],
+  ["villeneuve", "a8_villeneuve", "accès A 8", ""], ["cagnes", "a8_cagnes", "accès A 8", ""],
+  ["a8_est", "st_andre", "accès A 8", ""], ["a8_est", "ariane", "accès A 8", ""],
+  ["st_laurent", "la_manda", "M 6202bis", "s"], ["st_isidore", "la_manda", "M 6202", "s"], ["la_manda", "st_martin_var", "M 6202", "s"],
+  ["la_manda", "carros", "pont de la Manda", ""], ["la_manda", "colomars", "route de Colomars", ""],
+  ["carros", "gattieres", "route de Gattières", ""], ["gattieres", "st_jeannet", "route de Saint-Jeannet", ""],
+  ["st_jeannet", "vence", "route de Vence", ""], ["st_jeannet", "la_gaude", "route de La Gaude", ""],
+  ["la_gaude", "st_laurent", "route de La Gaude", ""], ["vence", "st_paul", "route de Vence", ""], ["st_paul", "cagnes", "route de Vence", ""],
+  ["st_martin_var", "levens", "route de Levens", ""], ["levens", "tourrette", "M 19", "s"], ["tourrette", "st_andre", "M 19", "s"],
+  ["st_andre", "pasteur", "M 19", "s"], ["aspremont", "tourrette", "route d'Aspremont", ""], ["aspremont", "gairaut", "route d'Aspremont", ""],
+  ["falicon", "st_andre", "route de Falicon", ""],
+  ["ariane", "la_trinite", "M 2204", "s"], ["la_trinite", "drap", "M 2204", "s"], ["drap", "lescarene", "M 2204", "s"],
+  ["drap", "contes", "route de Contes", ""],
+].map(([a, b, road, f]) => ({ a, b, road, shield: f.includes("s"), urban: f.includes("u"), len: dist(NODES[a], NODES[b]) }));
+
+const ADJ = {};
+for (const k in NODES) ADJ[k] = [];
+for (const e of EDGES) { ADJ[e.a].push({ to: e.b, len: e.len }); ADJ[e.b].push({ to: e.a, len: e.len }); }
+
+/* Zone police nationale : Nice, Saint-Laurent-du-Var, Cagnes-sur-Mer, Villefranche-sur-Mer (tracé simplifié) */
+const ZPN = [[43.640, 7.128], [43.648, 7.136], [43.695, 7.130], [43.705, 7.155], [43.716, 7.178], [43.722, 7.196],
+  [43.745, 7.198], [43.765, 7.215], [43.760, 7.245], [43.752, 7.270], [43.725, 7.285], [43.730, 7.296],
+  [43.745, 7.304], [43.735, 7.316], [43.718, 7.322], [43.712, 7.330], [43.700, 7.325], [43.690, 7.312],
+  [43.688, 7.290], [43.676, 7.250], [43.655, 7.215], [43.648, 7.185], [43.638, 7.150]].map(([a, b]) => P(a, b));
+function inPoly(p, poly) {
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++) {
+    const a = poly[i], b = poly[j];
+    if ((a.y > p.y) !== (b.y > p.y) && p.x < (b.x - a.x) * (p.y - a.y) / (b.y - a.y) + a.x) inside = !inside;
+  }
+  return inside;
+}
+
+const COAST = [[43.626, 7.095], [43.640, 7.128], [43.652, 7.155], [43.658, 7.180], [43.661, 7.198], [43.652, 7.207],
+  [43.648, 7.218], [43.660, 7.231], [43.672, 7.240], [43.688, 7.258], [43.694, 7.270], [43.695, 7.282], [43.692, 7.288],
+  [43.690, 7.296], [43.693, 7.306], [43.700, 7.310], [43.703, 7.313], [43.695, 7.318], [43.684, 7.320], [43.672, 7.330],
+  [43.680, 7.340], [43.692, 7.338], [43.703, 7.334], [43.712, 7.346], [43.716, 7.360], [43.720, 7.385], [43.723, 7.405],
+  [43.731, 7.420], [43.738, 7.430]].map(([a, b]) => P(a, b));
+const SEA_POLY = [...COAST, { x: W + 60, y: COAST[COAST.length - 1].y }, { x: W + 60, y: H + 400 }, { x: -60, y: H + 400 }, { x: -60, y: COAST[0].y }];
+const MONACO = [[43.727, 7.409], [43.745, 7.414], [43.752, 7.440], [43.733, 7.440]].map(([a, b]) => P(a, b));
+const RIVERS = [
+  { name: "le Var", at: P(43.745, 7.190), pts: [[43.661, 7.198], [43.690, 7.197], [43.720, 7.195], [43.750, 7.197], [43.780, 7.200], [43.810, 7.193], [43.845, 7.186], [43.880, 7.180]].map(([a, b]) => P(a, b)) },
+  { name: "le Paillon", at: P(43.790, 7.330), pts: [[43.695, 7.274], [43.705, 7.282], [43.718, 7.288], [43.735, 7.297], [43.750, 7.312], [43.770, 7.320], [43.800, 7.318], [43.825, 7.336], [43.845, 7.358]].map(([a, b]) => P(a, b)) },
+];
+const FORESTS = [[43.770, 7.262, 1.6, 1.0], [43.700, 7.302, 0.6, 0.35], [43.815, 7.255, 2.5, 1.6], [43.845, 7.300, 2.0, 1.4],
+  [43.790, 7.360, 2.2, 1.5], [43.760, 7.385, 1.5, 1.0], [43.790, 7.140, 1.8, 1.2], [43.850, 7.150, 2.5, 1.5], [43.735, 7.340, 1.0, 0.6]]
+  .map(([a, b, rx, ry]) => ({ ...P(a, b), rx: rx * KM, ry: ry * KM }));
+
+function dist(p, q) { return Math.hypot(p.x - q.x, p.y - q.y); }
+function rand(a, b) { return a + Math.random() * (b - a); }
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+function clamp(v, a, b) { return Math.max(a, Math.min(b, v)); }
+function zoneOf(p) { return inPoly(p, ZPN) ? "P" : "G"; }
+
+/* Plus court chemin sur le réseau routier (Dijkstra) */
+function dijkstra(src) {
+  const d = {}, prev = {}, Q = new Set(Object.keys(NODES));
+  for (const k of Q) d[k] = Infinity;
+  d[src] = 0;
+  while (Q.size) {
+    let u = null;
+    for (const k of Q) if (u === null || d[k] < d[u]) u = k;
+    Q.delete(u);
+    for (const { to, len } of ADJ[u]) if (Q.has(to) && d[u] + len < d[to]) { d[to] = d[u] + len; prev[to] = u; }
+  }
+  return { d, prev };
+}
+const DIJ = {};
+function dij(src) { return DIJ[src] || (DIJ[src] = dijkstra(src)); }
+function nearestNode(p) {
+  let best = null, bd = Infinity;
+  for (const k in NODES) { const dd = dist(p, NODES[k]); if (dd < bd) { bd = dd; best = k; } }
+  return best;
+}
+/* Itinéraire : du point de départ au nœud le plus proche, puis par la route jusqu'à la cible */
+function route(from, to, toNodes) {
+  const s = nearestNode(from);
+  const { d, prev } = dij(s);
+  let best = toNodes[0], bc = Infinity;
+  for (const c of toNodes) { const cost = d[c] + dist(NODES[c], to); if (cost < bc) { bc = cost; best = c; } }
+  const chain = [];
+  let k = best;
+  while (k !== undefined) { chain.unshift(k); if (k === s) break; k = prev[k]; }
+  const pts = [{ x: from.x, y: from.y }, ...chain.map(n => ({ x: NODES[n].x, y: NODES[n].y })), { x: to.x, y: to.y }];
+  let len = 0;
+  for (let i = 1; i < pts.length; i++) len += dist(pts[i - 1], pts[i]);
+  return { pts, len };
+}
+
+/* Génère un lieu d'intervention selon le type demandé par le scénario */
+const QUARTIERS = Object.keys(NODES).filter(k => NODES[k].kind === "quartier");
+const COMMUNES = Object.keys(NODES).filter(k => NODES[k].kind === "bourg" || NODES[k].kind === "village");
+const RURAL = ["levens", "tourrette", "aspremont", "falicon", "colomars", "st_martin_var", "contes", "lescarene",
+  "gattieres", "st_jeannet", "la_gaude", "eze", "la_turbie", "carros", "vence"];
+function makeLocation(kind) {
+  const roads = EDGES.filter(e => !e.urban && e.len > 1.2 * KM);
+  if (kind === "route" || (kind === "rural" && Math.random() < 0.4)) {
+    const e = pick(kind === "route" ? roads : roads.filter(r => RURAL.includes(r.a) || RURAL.includes(r.b)));
+    const t = rand(0.3, 0.7);
+    const A = NODES[e.a], B = NODES[e.b];
+    const p = { x: A.x + (B.x - A.x) * t, y: A.y + (B.y - A.y) * t };
+    const between = `entre ${fullName(e.a)} et ${fullName(e.b)}`;
+    const onRoad = /^[AM] /.test(e.road) ? `${e.road.startsWith("A") ? "l'" : "la "}${e.road}` : e.road;
+    return { ...p, nodes: [e.a, e.b], zone: zoneOf(p), address: `${e.road}, ${between}`,
+      spoken: `Sur ${onRoad}, ${between}.`, short: e.road };
+  }
+  const n = kind === "ville" ? pick(QUARTIERS)
+    : kind === "rural" ? pick(RURAL)
+    : Math.random() < 0.55 ? pick(QUARTIERS) : pick(COMMUNES);
+  const N = NODES[n];
+  let p, tries = 0;
+  do { // jamais dans la mer
+    const r = (N.kind === "quartier" ? rand(0.15, 0.55) : N.kind === "bourg" ? rand(0.15, 0.7) : rand(0.05, 0.3)) * KM / (1 + tries);
+    const a = rand(0, Math.PI * 2);
+    p = { x: N.x + Math.cos(a) * r, y: N.y + Math.sin(a) * r };
+  } while (inPoly(p, SEA_POLY) && ++tries < 12);
+  if (inPoly(p, SEA_POLY)) p = { x: N.x, y: N.y };
+  const num = Math.floor(rand(1, 80)), street = pick(N.streets || STREETS);
+  const town = N.kind === "quartier" ? "Nice" : N.name;
+  return { ...p, nodes: [n], zone: zoneOf(p), address: `${num} ${street}, ${town}`,
+    spoken: `Au ${num} ${street}, à ${town}.`, short: N.kind === "quartier" ? `Nice · ${N.name}` : N.name };
+}
+
+/* =========================================================
+   3. Services, bases et moyens
+   ========================================================= */
+const SVC_NAME = { "18": "Pompiers", "15": "SAMU", "17": "Police / Gendarmerie" };
+const TYPES = {
+  VSAV: { svc: "18", label: "VSAV", long: "secours à personne", kmh: 65, alert: 60, onScene: 480, transport: true },
+  FPT:  { svc: "18", label: "FPT", long: "incendie", kmh: 60, alert: 60, onScene: 720 },
+  EPA:  { svc: "18", label: "EPA", long: "échelle", kmh: 50, alert: 75, onScene: 600 },
+  VSR:  { svc: "18", label: "VSR", long: "désincarcération", kmh: 60, alert: 75, onScene: 840 },
+  CCF:  { svc: "18", label: "CCF", long: "feux de forêt", kmh: 50, alert: 75, onScene: 900 },
+  SMUR: { svc: "15", label: "SMUR", long: "équipe médicale", kmh: 80, alert: 60, onScene: 660 },
+  AMBU: { svc: "15", label: "Ambulance", long: "transport sanitaire", kmh: 55, alert: 150, onScene: 420, transport: true },
+  PS:   { svc: "17", force: "P", label: "Police secours", long: "patrouille", kmh: 70, alert: 15, onScene: 600 },
+  BAC:  { svc: "17", force: "P", label: "BAC", long: "anticriminalité", kmh: 75, alert: 20, onScene: 540 },
+  PATG: { svc: "17", force: "G", label: "Patrouille", long: "gendarmerie", kmh: 70, alert: 40, onScene: 600 },
+  PSIG: { svc: "17", force: "G", label: "PSIG", long: "renfort gendarmerie", kmh: 75, alert: 60, onScene: 600 },
+};
+for (const t of Object.values(TYPES)) t.speed = t.kmh * KM / 3600; // unités de carte par seconde de jeu
+const SLOT_LABEL = {
+  VSAV: "un VSAV", FPT: "un FPT", EPA: "une échelle (EPA)", VSR: "un VSR", CCF: "un CCF", SMUR: "un SMUR", AMBU: "une ambulance",
+  PS: "une patrouille de police", BAC: "la BAC", PATG: "une patrouille de gendarmerie", PSIG: "le PSIG",
+  PATROUILLE: "une patrouille (police ou gendarmerie selon la zone)",
+};
+/* vol : centre armé par des volontaires d'astreinte, départ plus long ; hyp : implantation supposée, à vérifier */
+const BASES = [
+  { id: "cis_magnan", name: "CIS Nice-Magnan", svc: "18", at: [43.6990, 7.2460] },
+  { id: "cis_hancy", name: "CIS Nice-Hancy", svc: "18", at: [43.7045, 7.2585] },
+  { id: "cis_fodere", name: "CIS Nice-Fodéré", svc: "18", at: [43.7040, 7.2885] },
+  { id: "cis_bonvoyage", name: "CIS Nice-Bon-Voyage", svc: "18", at: [43.7275, 7.2950] },
+  { id: "cis_nord", name: "CIS Nice-Nord", svc: "18", at: [43.7255, 7.2700] },
+  { id: "cis_isidore", name: "CIS Nice-Saint-Isidore", svc: "18", at: [43.6960, 7.2140] },
+  { id: "cis_stjean", name: "CIS Saint-Jean-Cap-Ferrat", svc: "18", at: [43.6960, 7.3300] },
+  { id: "cis_eze", name: "CPI Èze", svc: "18", at: [43.7275, 7.3600], vol: true },
+  { id: "cis_cagnes", name: "CIS Cagnes-sur-Mer", svc: "18", at: [43.6680, 7.1500], hyp: true },
+  { id: "cis_carros", name: "CIS Carros", svc: "18", at: [43.7800, 7.1950], hyp: true },
+  { id: "cis_levens", name: "CIS Levens", svc: "18", at: [43.8560, 7.2240], hyp: true, vol: true },
+  { id: "cis_contes", name: "CIS Contes", svc: "18", at: [43.8100, 7.3150], hyp: true, vol: true },
+  { id: "cis_vence", name: "CIS Vence", svc: "18", at: [43.7210, 7.1150], hyp: true },
+  { id: "ch_pasteur", name: "Hôpital Pasteur 2 · SAMU 06", svc: "15", at: [43.7225, 7.2855] },
+  { id: "amb_ouest", name: "Ambulances privées Nice-Ouest", svc: "15", at: [43.6930, 7.2300], hyp: true },
+  { id: "amb_est", name: "Ambulances privées Nice-Est", svc: "15", at: [43.7120, 7.2850], hyp: true },
+  { id: "amb_cagnes", name: "Ambulances privées Cagnes", svc: "15", at: [43.6660, 7.1560], hyp: true },
+  { id: "amb_trinite", name: "Ambulances privées La Trinité", svc: "15", at: [43.7445, 7.3125], hyp: true },
+  { id: "cp_foch", name: "Hôtel de police de Nice (Foch)", svc: "17", force: "P", at: [43.7015, 7.2725] },
+  { id: "cp_ariane", name: "Commissariat Nice-Ariane", svc: "17", force: "P", at: [43.7360, 7.3000] },
+  { id: "cp_augustin", name: "Commissariat Nice-Saint-Augustin", svc: "17", force: "P", at: [43.6790, 7.2060] },
+  { id: "cp_cagnes", name: "Commissariat de Cagnes-sur-Mer", svc: "17", force: "P", at: [43.6610, 7.1460] },
+  { id: "cp_stlaurent", name: "Commissariat de Saint-Laurent-du-Var", svc: "17", force: "P", at: [43.6700, 7.1910] },
+  { id: "cp_villefranche", name: "Commissariat de Villefranche-sur-Mer", svc: "17", force: "P", at: [43.7040, 7.3100] },
+  { id: "bt_carros", name: "Brigade de Carros", svc: "17", force: "G", at: [43.7870, 7.1880] },
+  { id: "bt_stmartin", name: "Brigade de Saint-Martin-du-Var", svc: "17", force: "G", at: [43.8170, 7.1930] },
+  { id: "bt_levens", name: "Brigade de Levens", svc: "17", force: "G", at: [43.8580, 7.2280] },
+  { id: "bt_contes", name: "Brigade de Contes", svc: "17", force: "G", at: [43.8130, 7.3130] },
+  { id: "bt_lescarene", name: "Brigade de L'Escarène", svc: "17", force: "G", at: [43.8345, 7.3545] },
+  { id: "bt_trinite", name: "Brigade de La Trinité", svc: "17", force: "G", at: [43.7430, 7.3160] },
+  { id: "bt_standre", name: "Brigade de Saint-André-de-la-Roche", svc: "17", force: "G", at: [43.7345, 7.2920] },
+  { id: "bt_eze", name: "Brigade d'Èze", svc: "17", force: "G", at: [43.7270, 7.3625] },
+  { id: "bt_beaulieu", name: "Brigade de Beaulieu-sur-Mer", svc: "17", force: "G", at: [43.7080, 7.3330] },
+  { id: "bt_capdail", name: "Brigade de Cap-d'Ail", svc: "17", force: "G", at: [43.7220, 7.4030] },
+  { id: "bt_turbie", name: "Brigade de La Turbie", svc: "17", force: "G", at: [43.7450, 7.4020] },
+  { id: "bt_vence", name: "Brigade de Vence", svc: "17", force: "G", at: [43.7230, 7.1135] },
+  { id: "bt_villeneuve", name: "Brigade de Villeneuve-Loubet", svc: "17", force: "G", at: [43.6600, 7.1230] },
+];
+for (const b of BASES) Object.assign(b, P(b.at[0], b.at[1]));
+/* Écarte les marqueurs trop proches pour qu'ils restent lisibles */
+BASES.forEach((b, i) => {
+  for (let k = 0; k < i; k++) {
+    const o = BASES[k];
+    if (Math.abs(b.x - o.x) < 0.75 * KM && Math.abs(b.y - o.y) < 0.45 * KM) { b.y = o.y + 0.5 * KM; k = -1; }
+  }
+});
+for (const b of BASES) b.node = nearestNode(b);
+const BASE = Object.fromEntries(BASES.map(b => [b.id, b]));
+const HOSPITAL = BASE.ch_pasteur;
+const HOSPITAL_NAME = "l'hôpital Pasteur 2";
+
+const UNITS = [
+  ["VSAV Magnan 1", "VSAV", "cis_magnan"], ["VSAV Magnan 2", "VSAV", "cis_magnan"], ["FPT Magnan", "FPT", "cis_magnan"], ["EPA Magnan", "EPA", "cis_magnan"],
+  ["VSAV Hancy", "VSAV", "cis_hancy"], ["FPT Hancy", "FPT", "cis_hancy"],
+  ["VSAV Fodéré", "VSAV", "cis_fodere"], ["FPT Fodéré", "FPT", "cis_fodere"], ["EPA Fodéré", "EPA", "cis_fodere"],
+  ["VSAV Bon-Voyage", "VSAV", "cis_bonvoyage"], ["VSR Bon-Voyage", "VSR", "cis_bonvoyage"],
+  ["VSAV Nice-Nord", "VSAV", "cis_nord"], ["CCF Nice-Nord", "CCF", "cis_nord"],
+  ["VSAV Saint-Isidore", "VSAV", "cis_isidore"], ["FPT Saint-Isidore", "FPT", "cis_isidore"], ["VSR Saint-Isidore", "VSR", "cis_isidore"],
+  ["VSAV Saint-Jean", "VSAV", "cis_stjean"], ["FPT Saint-Jean", "FPT", "cis_stjean"],
+  ["VSAV Èze", "VSAV", "cis_eze"],
+  ["VSAV Cagnes", "VSAV", "cis_cagnes"], ["FPT Cagnes", "FPT", "cis_cagnes"],
+  ["VSAV Carros", "VSAV", "cis_carros"], ["CCF Carros", "CCF", "cis_carros"],
+  ["VSAV Levens", "VSAV", "cis_levens"], ["CCF Levens", "CCF", "cis_levens"],
+  ["VSAV Contes", "VSAV", "cis_contes"], ["CCF Contes", "CCF", "cis_contes"],
+  ["VSAV Vence", "VSAV", "cis_vence"], ["CCF Vence", "CCF", "cis_vence"],
+  ["SMUR Nice 1", "SMUR", "ch_pasteur"], ["SMUR Nice 2", "SMUR", "ch_pasteur"],
+  ["Ambulance Nice-Ouest", "AMBU", "amb_ouest"], ["Ambulance Nice-Est", "AMBU", "amb_est"],
+  ["Ambulance Cagnes", "AMBU", "amb_cagnes"], ["Ambulance La Trinité", "AMBU", "amb_trinite"],
+  ["PS Nice 1", "PS", "cp_foch"], ["PS Nice 2", "PS", "cp_foch"], ["BAC Nice", "BAC", "cp_foch"],
+  ["PS Ariane", "PS", "cp_ariane"], ["PS Saint-Augustin", "PS", "cp_augustin"],
+  ["PS Cagnes", "PS", "cp_cagnes"], ["PS Saint-Laurent", "PS", "cp_stlaurent"], ["PS Villefranche", "PS", "cp_villefranche"],
+  ["Patrouille Carros", "PATG", "bt_carros"], ["Patrouille Saint-Martin-du-Var", "PATG", "bt_stmartin"],
+  ["Patrouille Levens", "PATG", "bt_levens"], ["Patrouille Contes", "PATG", "bt_contes"],
+  ["Patrouille L'Escarène", "PATG", "bt_lescarene"], ["Patrouille La Trinité", "PATG", "bt_trinite"],
+  ["Patrouille Saint-André", "PATG", "bt_standre"], ["PSIG Nice", "PSIG", "bt_standre"],
+  ["Patrouille Èze", "PATG", "bt_eze"], ["Patrouille Beaulieu", "PATG", "bt_beaulieu"],
+  ["Patrouille Cap-d'Ail", "PATG", "bt_capdail"], ["Patrouille La Turbie", "PATG", "bt_turbie"],
+  ["Patrouille Vence", "PATG", "bt_vence"], ["Patrouille Villeneuve-Loubet", "PATG", "bt_villeneuve"],
+].map(([label, type, base], i) => ({
+  id: "u" + i, label, type, base: BASE[base], status: "dispo",
+  x: BASE[base].x, y: BASE[base].y, path: null, pi: 0, speedNow: 1, inter: null, timer: 0,
+}));
+const UNIT = Object.fromEntries(UNITS.map(u => [u.id, u]));
+const STATUS_LABEL = { dispo: "Disponible", alerte: "Alerté", parti: "Parti", surplace: "Sur les lieux",
+  transport: "Transport", hopital: "À l'hôpital", retour: "Retour" };
+
+function alertDelay(u) { return TYPES[u.type].alert + (u.base.vol ? 240 : 0); }
+function unitSvcClass(u) { const t = TYPES[u.type]; return t.svc === "17" ? (t.force === "G" ? "s17g" : "s17") : "s" + t.svc; }
+function typeMatches(slotType, unitType, zone) {
+  if (slotType === "PATROUILLE") return zone === "P" ? (unitType === "PS" || unitType === "BAC") : (unitType === "PATG" || unitType === "PSIG");
+  return slotType === unitType;
+}
+function wrongZone(u, zone) { const f = TYPES[u.type].force; return !!f && f !== zone; }
+function etaFor(u, loc) {
+  const r = route({ x: u.x, y: u.y }, loc, loc.nodes);
+  return alertDelay(u) + r.len / TYPES[u.type].speed;
+}
+
+/* =========================================================
+   4. Natures et scénarios
+   ========================================================= */
+const NATURES = [
+  { id: "malaise", label: "Malaise, personne consciente", depart: ["AMBU"] },
+  { id: "thorax", label: "Douleur thoracique", depart: ["SMUR", "AMBU"] },
+  { id: "acr", label: "Arrêt cardio-respiratoire", depart: ["VSAV", "SMUR"] },
+  { id: "detresse", label: "Détresse respiratoire", depart: ["VSAV", "SMUR"] },
+  { id: "chute", label: "Chute de personne âgée", depart: ["VSAV"] },
+  { id: "feu_maison", label: "Feu d'habitation, sans victime", depart: ["FPT", "VSAV"] },
+  { id: "feu_appart", label: "Feu d'appartement, personne menacée", depart: ["FPT", "EPA", "VSAV"] },
+  { id: "feu_veg", label: "Feu d'espace naturel", depart: ["CCF", "CCF"] },
+  { id: "avp", label: "Accident de la route, victime incarcérée", depart: ["VSAV", "VSR", "SMUR", "PATROUILLE"] },
+  { id: "cambriolage", label: "Cambriolage en cours", depart: ["PATROUILLE"] },
+  { id: "vif", label: "Violences intrafamiliales", depart: ["PATROUILLE"] },
+  { id: "rixe", label: "Rixe sur la voie publique", depart: ["PATROUILLE", "PATROUILLE", "VSAV"] },
+  { id: "silencieux", label: "Appel silencieux, personne en danger", depart: ["PATROUILLE"] },
+  { id: "abusif", label: "Appel abusif", depart: [] },
+];
+const NATURE = Object.fromEntries(NATURES.map(n => [n.id, n]));
+
+/* Chaque scénario : ce que dit l'appelant, les questions possibles (key = information déterminante),
+   les moyens attendus (chaque case accepte un des types listés), les besoins révélés sur place. */
+const SCENARIOS = [
+  { id: "malaise", nature: "malaise", numero: "15", prio: "P2", lieu: "any",
+    opening: "Bonsoir… C'est pour mon père, il a la tête qui tourne depuis tout à l'heure.",
+    questions: [
+      { q: "Est-il conscient, vous répond-il ?", a: "Oui, il me parle, il est assis dans son fauteuil.", key: true },
+      { q: "Respire-t-il normalement ?", a: "Oui, normalement.", key: true },
+      { q: "A-t-il mal dans la poitrine ?", a: "Non, il dit que non.", key: true },
+      { q: "Quel âge a-t-il ?", a: "Quatre-vingt-deux ans.", key: false },
+      { q: "Prend-il des médicaments ?", a: "Pour la tension. Il a peut-être oublié de manger ce soir.", key: false },
+    ],
+    expected: [["AMBU", "VSAV"]], transport: true,
+    bilan: "Patient de 82 ans, conscient, glycémie basse. Resucré, transport vers l'hôpital Pasteur 2." },
+
+  { id: "acr", nature: "acr", numero: "18", allow112: true, prio: "P1", lieu: "any",
+    opening: "Il est tombé d'un coup ! Mon mari, il ne répond plus, venez vite !",
+    questions: [
+      { q: "Est-ce qu'il respire ? Regardez son ventre.", a: "Non… Non, je crois qu'il ne respire pas.", key: true },
+      { q: "Pouvez-vous commencer le massage cardiaque ? Je vous guide.", a: "D'accord, je le mets sur le dos… J'appuie.", key: true },
+      { q: "Quel âge a-t-il ?", a: "Soixante-quatre ans.", key: false },
+      { q: "Y a-t-il un défibrillateur à proximité ?", a: "Je ne sais pas, peut-être à la mairie.", key: false },
+    ],
+    expected: [["VSAV"], ["SMUR"]], tolerated: ["FPT"], transport: true,
+    bilan: "Victime en arrêt cardio-respiratoire, massage en cours, défibrillateur posé." },
+
+  { id: "thorax", nature: "thorax", numero: "15", prio: "P1", lieu: "any",
+    opening: "J'ai une douleur dans la poitrine, ça serre fort, depuis vingt minutes.",
+    questions: [
+      { q: "La douleur descend-elle dans le bras ou la mâchoire ?", a: "Oui, dans le bras gauche.", key: true },
+      { q: "Transpirez-vous, avez-vous des nausées ?", a: "Oui, je suis en sueur.", key: true },
+      { q: "Avez-vous déjà eu des problèmes cardiaques ?", a: "J'ai du cholestérol, c'est tout.", key: false },
+      { q: "Êtes-vous seul ?", a: "Ma femme est avec moi.", key: false },
+    ],
+    expected: [["SMUR"], ["AMBU", "VSAV"]], transport: true,
+    bilan: "Suspicion d'infarctus, électrocardiogramme transmis, transport vers l'hôpital Pasteur 2." },
+
+  { id: "chute", nature: "chute", numero: "18", allow112: true, prio: "P2", lieu: "any",
+    opening: "Bonjour, ma mère est tombée dans sa cuisine, elle n'arrive pas à se relever.",
+    questions: [
+      { q: "Est-elle consciente ?", a: "Oui, elle me parle.", key: true },
+      { q: "S'est-elle cogné la tête ?", a: "Non, elle est tombée sur le côté.", key: true },
+      { q: "A-t-elle mal quelque part ?", a: "À la hanche, elle a très mal.", key: true },
+      { q: "Depuis combien de temps est-elle au sol ?", a: "Je l'ai trouvée il y a dix minutes.", key: false },
+    ],
+    expected: [["VSAV"]], tolerated: ["AMBU"], transport: true,
+    bilan: "Dame de 87 ans, suspicion de fracture du col du fémur. Transport vers l'hôpital Pasteur 2." },
+
+  { id: "feu_maison", nature: "feu_maison", numero: "18", allow112: true, prio: "P1", lieu: "any",
+    opening: "Il y a le feu dans ma cuisine ! La poêle a pris feu, il y a plein de fumée !",
+    questions: [
+      { q: "Tout le monde est-il sorti ?", a: "Oui, on est tous dans le jardin.", key: true },
+      { q: "Les flammes atteignent-elles le plafond ?", a: "Non, c'est surtout de la fumée maintenant.", key: true },
+      { q: "Est-ce une maison ou un immeuble ?", a: "Une maison de plain-pied.", key: true },
+      { q: "Avez-vous essayé d'éteindre ?", a: "J'ai mis un couvercle, mais ça fume toujours.", key: false },
+    ],
+    expected: [["FPT"]], tolerated: ["VSAV"], transport: false,
+    bilan: "Feu de friteuse éteint, ventilation de la maison, pas de victime." },
+
+  { id: "feu_appart", nature: "feu_appart", numero: "18", allow112: true, prio: "P1", lieu: "ville",
+    opening: "Il y a de la fumée noire qui sort de l'immeuble en face, au troisième étage !",
+    questions: [
+      { q: "Quelqu'un est-il encore à l'intérieur ?", a: "Une dame au balcon du quatrième, elle fait des signes !", key: true },
+      { q: "Voyez-vous des flammes ?", a: "Oui, par la fenêtre du troisième.", key: true },
+      { q: "Combien d'étages a l'immeuble ?", a: "Cinq ou six.", key: false },
+      { q: "Êtes-vous en sécurité ?", a: "Oui, je suis dans la rue.", key: false },
+    ],
+    expected: [["FPT"], ["EPA"], ["VSAV"]], tolerated: ["FPT", "SMUR", "VSAV"],
+    lateNeeds: [["PATROUILLE"]], lateMsg: "Chef d'agrès : demande les forces de l'ordre pour fermer la rue aux curieux.",
+    transport: true,
+    bilan: "Feu d'appartement au 3e étage. Une personne évacuée par l'échelle, légèrement intoxiquée." },
+
+  { id: "feu_veg", nature: "feu_veg", numero: "18", allow112: true, prio: "P2", lieu: "rural",
+    opening: "Je passe en voiture, il y a des flammes dans la colline, juste au-dessus de la route !",
+    questions: [
+      { q: "Le feu menace-t-il des maisons ?", a: "Il y a des villas plus haut, à quelques centaines de mètres.", key: true },
+      { q: "Quelle surface environ, et le vent ?", a: "Comme un demi-terrain de foot. Il y a un peu de vent, ça monte vers les pins.", key: true },
+      { q: "Y a-t-il quelqu'un sur place ?", a: "Personne, je me suis arrêté un peu plus loin.", key: false },
+    ],
+    expected: [["CCF"], ["CCF", "FPT"]], tolerated: ["CCF", "FPT", "VSAV"], transport: false,
+    bilan: "Feu de broussailles d'environ 5 000 m² sur un versant, mistral faible. Fixé, surveillance en cours." },
+
+  { id: "avp", nature: "avp", numero: "18", allow112: true, prio: "P1", lieu: "route",
+    opening: "Une voiture a percuté un arbre ! Il y a quelqu'un dedans !",
+    questions: [
+      { q: "Le conducteur bouge-t-il, vous répond-il ?", a: "Il gémit mais ne bouge pas, il a du sang sur le visage.", key: true },
+      { q: "Peut-on ouvrir les portières ?", a: "Non, la portière est complètement enfoncée.", key: true },
+      { q: "La route est-elle bloquée ?", a: "À moitié, les voitures ralentissent.", key: true },
+      { q: "Combien de personnes dans le véhicule ?", a: "Une seule, le conducteur.", key: false },
+      { q: "Y a-t-il de la fumée ou une fuite ?", a: "Non, pas de fumée.", key: false },
+    ],
+    expected: [["VSAV"], ["VSR"], ["SMUR"], ["PATROUILLE"]], tolerated: ["FPT"], transport: true,
+    bilan: "Conducteur incarcéré, conscient. Désincarcération en cours, balisage de la chaussée." },
+
+  { id: "cambriolage", nature: "cambriolage", numero: "17", prio: "P1", lieu: "any",
+    opening: "(à voix basse) J'entends quelqu'un dans mon garage… Je suis seule avec ma fille.",
+    questions: [
+      { q: "Êtes-vous enfermée dans une pièce ?", a: "Oui, dans la chambre, j'ai fermé à clé.", key: true },
+      { q: "Combien de personnes entendez-vous ?", a: "Deux, je crois. Ils parlent entre eux.", key: true },
+      { q: "Y a-t-il un véhicule devant chez vous ?", a: "Une camionnette blanche, moteur allumé.", key: true },
+      { q: "Ont-ils vu que vous étiez là ?", a: "Je ne pense pas, les lumières sont éteintes.", key: false },
+    ],
+    expected: [["PATROUILLE"]], tolerated: ["BAC", "PSIG", "PS", "PATG"], transport: false,
+    bilan: "Deux individus interpellés à la sortie du garage. Victime choquée, indemne." },
+
+  { id: "vif", nature: "vif", numero: "17", prio: "P1", lieu: "any",
+    opening: "J'appelle pour mes voisins… Ça crie très fort, j'entends une femme qui appelle à l'aide.",
+    questions: [
+      { q: "Entendez-vous des coups ?", a: "Oui, des bruits sourds, des choses qui tombent.", key: true },
+      { q: "Y a-t-il des enfants dans le logement ?", a: "Ils ont un petit garçon, je crois.", key: true },
+      { q: "Est-ce déjà arrivé ?", a: "Plusieurs fois, mais jamais aussi fort.", key: false },
+      { q: "Savez-vous si l'homme est armé ?", a: "Je ne sais pas.", key: false },
+    ],
+    expected: [["PATROUILLE"]], tolerated: ["BAC", "PSIG"],
+    lateNeeds: [["VSAV", "AMBU"]], lateMsg: "Patrouille sur place : une femme blessée au visage, demande un moyen de secours.",
+    transport: true,
+    bilan: "Situation sécurisée, auteur interpellé. L'enfant est confié à un proche." },
+
+  { id: "rixe", nature: "rixe", numero: "17", prio: "P1", lieu: "ville",
+    opening: "Il y a une bagarre devant le bar, ils sont au moins cinq, ça dégénère !",
+    questions: [
+      { q: "Voyez-vous des armes ?", a: "Une bouteille cassée, je crois.", key: true },
+      { q: "Y a-t-il des blessés ?", a: "Un homme est par terre, il saigne de la tête.", key: true },
+      { q: "Pouvez-vous décrire les individus ?", a: "Des jeunes, en sweats sombres.", key: false },
+    ],
+    expected: [["PATROUILLE"], ["PATROUILLE", "BAC"], ["VSAV"]], tolerated: ["BAC", "PS"], transport: true,
+    bilan: "Rixe dispersée, deux interpellations. Un blessé au cuir chevelu, pris en charge." },
+
+  { id: "silencieux", nature: "silencieux", numero: "17", prio: "P1", lieu: "any",
+    opening: "… (personne ne parle, on entend une respiration)",
+    addr: { a: "(silence… une télévision au loin)", reveal: false, key: false },
+    questions: [
+      { q: "Si vous ne pouvez pas parler, tapez deux fois sur le téléphone.", a: "(deux petits coups)", key: true },
+      { q: "Lancer la géolocalisation de l'appel (AML)", a: "Localisation reçue : {adr} Précision 30 m.", key: true, reveal: true, special: true },
+      { q: "Êtes-vous en danger en ce moment ?", a: "(deux coups)", key: false },
+    ],
+    expected: [["PATROUILLE"]], tolerated: ["BAC", "PSIG"], transport: false,
+    bilan: "Personne retrouvée, menacée par son ex-conjoint. Auteur interpellé." },
+
+  { id: "detresse", nature: "detresse", numero: "17", prio: "P1", lieu: "any",
+    opening: "Allô la police ? Mon voisin est assis dans l'escalier, il respire très mal, il est tout gris.",
+    questions: [
+      { q: "Arrive-t-il à parler ?", a: "Juste quelques mots, il est très essoufflé.", key: true },
+      { q: "Est-il malade, asthmatique ?", a: "Il a une maladie des poumons, il a de l'oxygène chez lui.", key: true },
+      { q: "Y a-t-il eu une bagarre ou une agression ?", a: "Non, non, il est malade.", key: false },
+    ],
+    expected: [["VSAV"], ["SMUR"]], transport: true,
+    bilan: "Insuffisance respiratoire aiguë, oxygène en place. Transport médicalisé." },
+
+  { id: "abusif", nature: "abusif", numero: "18", prio: "P2", lieu: "ville",
+    opening: "Allô les pompiers ? Y a le feu chez… chez le maire ! (rires étouffés)",
+    addr: { a: "Euh… {adr} (rires)", reveal: true, key: false },
+    questions: [
+      { q: "Quel est votre nom et votre âge ?", a: "(rires) Euh… Kevin, douze ans. (il raccroche)", key: true },
+      { q: "Voyez-vous des flammes ou de la fumée ?", a: "Ouais, plein ! (rires derrière lui)", key: false },
+    ],
+    expected: [], transport: false, bilan: "" },
+];
+for (const sc of SCENARIOS) {
+  const addr = sc.addr || {};
+  sc.allQ = [
+    { id: sc.id + "-adr", q: "Quelle est l'adresse exacte ?", a: addr.a || "{adr}", key: addr.key !== false, reveal: addr.reveal !== false },
+    ...sc.questions.map((q, i) => ({ ...q, id: sc.id + "-" + i })),
+  ];
+}
+
+/* =========================================================
+   5. État du jeu
+   ========================================================= */
+let speed = 1, paused = true, started = false, soundOn = false;
+let elapsed = 0, nextSpawn = 0, callSeq = 0, interSeq = 0, msgSeq = 0;
+let bag = [];
+const calls = [], inters = [], radio = [];
+const stats = { done: 0, total: 0, lost: 0 };
+let selected = null; // { kind: "call" | "inter", id }
+let dirty = { left: true, right: true, radio: true };
+
+function svcOfNumero(n) { return n === "112" ? "18" : n; }
+function numClass(n, zone) { return n === "17" && zone === "G" ? "n17g" : "n" + (n === "112" ? "112" : n); }
+function nextScenario() {
+  if (!bag.length) bag = SCENARIOS.slice().sort(() => Math.random() - 0.5);
+  return bag.pop();
+}
+function say(svc, text) {
+  radio.unshift({ id: ++msgSeq, t: elapsed, svc, text });
+  if (radio.length > 60) radio.pop();
+  dirty.radio = true;
+}
+
+function spawnCall() {
+  const sc = nextScenario();
+  let numero = sc.numero;
+  if (sc.allow112 && Math.random() < 0.25) numero = "112";
+  const loc = makeLocation(sc.lieu);
+  calls.push({ id: "c" + (++callSeq), sc, numero, loc, ringStart: elapsed, answered: false,
+    asked: new Set(), transcript: [], qcost: 0, addressKnown: false,
+    open: new Set([svcOfNumero(numero)]), nature: "", sel: new Set(), hint: "" });
+  beep();
+  dirty.left = true;
+  if (!selected) { /* laisse le joueur choisir */ }
+}
+
+function greeting(call) {
+  if (call.numero === "15") return "SAMU, bonsoir, je vous écoute.";
+  if (call.numero === "18") return "Pompiers, bonsoir.";
+  if (call.numero === "112") return "Numéro d'urgence 112, bonsoir.";
+  return call.loc.zone === "P" ? "Police secours, j'écoute." : "Gendarmerie nationale, j'écoute.";
+}
+
+function answer(call) {
+  if (call.answered) return;
+  call.answered = true;
+  call.transcript.push({ who: "op", text: greeting(call) });
+  call.transcript.push({ who: "ap", text: call.sc.opening });
+  dirty.left = dirty.right = true;
+}
+
+function ask(call, qid) {
+  const q = call.sc.allQ.find(x => x.id === qid);
+  if (!q || call.asked.has(qid)) return;
+  call.asked.add(qid);
+  call.qcost += Q_COST;
+  call.transcript.push({ who: "op", text: q.q });
+  call.transcript.push({ who: "ap", text: q.a.replace("{adr}", q.special ? call.loc.address + "." : call.loc.spoken) });
+  if (q.reveal) call.addressKnown = true;
+  dirty.right = dirty.left = true;
+}
+
+function interconnect(obj, svc) {
+  if (obj.open.has(svc)) return;
+  obj.open.add(svc);
+  obj.qcost = (obj.qcost || 0) + IC_COST;
+  say("sys", `Interconnexion avec le ${svc} (${SVC_NAME[svc]}).`);
+  dirty.right = true;
+}
+
+function propose(obj, loc, natureId) {
+  const n = NATURE[natureId];
+  if (!n) return "Choisissez d'abord une nature.";
+  if (!n.depart.length) { obj.sel.clear(); return "Cette nature ne demande aucun moyen."; }
+  const chosen = new Set(), missing = [];
+  for (const t of n.depart) {
+    const cands = UNITS.filter(u => u.status === "dispo" && !chosen.has(u.id) && !obj.sel.has(u.id) && typeMatches(t, u.type, loc.zone));
+    if (!cands.length) { missing.push(SLOT_LABEL[t]); continue; }
+    cands.sort((a, b) => etaFor(a, loc) - etaFor(b, loc));
+    chosen.add(cands[0].id);
+  }
+  obj.sel = new Set([...obj.sel, ...chosen]);
+  return missing.length ? `Aucun moyen disponible pour : ${missing.join(", ")}.` : `Départ type proposé : ${chosen.size} moyen(s).`;
+}
+
+function engageCall(call) {
+  const inter = {
+    id: "i" + (++interSeq), num: interSeq, sc: call.sc, nature: call.nature, loc: call.loc,
+    received: call.numero, open: new Set(call.open), units: [], createdAt: call.ringStart,
+    firstEngageAt: null, firstArrivalAt: null, qcost: call.qcost, asked: new Set(call.asked),
+    transcript: call.transcript.slice(), requests: [], closed: false, score: null, transportBy: null, sel: new Set(),
+  };
+  inters.unshift(inter);
+  calls.splice(calls.indexOf(call), 1);
+  const ids = [...call.sel];
+  if (ids.length) engage(inter, ids);
+  else closeInter(inter, "Appel clôturé sans engagement.");
+  selected = { kind: "inter", id: inter.id };
+  dirty.left = dirty.right = true;
+}
+
+function engage(inter, ids) {
+  const labels = [];
+  for (const id of ids) {
+    const u = UNIT[id];
+    if (!u || u.status !== "dispo") continue;
+    u.status = "alerte"; u.timer = alertDelay(u); u.inter = inter.id;
+    inter.units.push({ uid: id, at: elapsed, late: inter.firstArrivalAt !== null });
+    labels.push(u.label);
+  }
+  if (labels.length && inter.firstEngageAt === null) inter.firstEngageAt = elapsed;
+  if (labels.length) say("sys", `#${inter.num} · engagé : ${labels.join(", ")}.`);
+  inter.sel = new Set();
+  dirty.left = dirty.right = true;
+}
+
+/* =========================================================
+   6. Simulation
+   ========================================================= */
+function sendTo(u, target, nodes, mul = 1) {
+  const r = route({ x: u.x, y: u.y }, target, nodes);
+  u.path = r.pts; u.pi = 0; u.speedNow = TYPES[u.type].speed * mul;
+}
+function move(u, gdt) {
+  let remain = u.speedNow * gdt;
+  while (remain > 0 && u.pi < u.path.length - 1) {
+    const b = u.path[u.pi + 1], d = dist(u, b);
+    if (d <= remain) { u.x = b.x; u.y = b.y; u.pi++; remain -= d; }
+    else { u.x += (b.x - u.x) / d * remain; u.y += (b.y - u.y) / d * remain; remain = 0; }
+  }
+  return u.pi >= u.path.length - 1;
+}
+function goHome(u) {
+  u.status = "retour"; u.inter = null;
+  sendTo(u, u.base, [u.base.node]);
+}
+function interById(id) { return inters.find(i => i.id === id); }
+
+function slotsOf(sc) {
+  return [...sc.expected.map(s => ({ s, late: false })), ...(sc.lateNeeds || []).map(s => ({ s, late: true }))]
+    .sort((a, b) => a.s.length - b.s.length);
+}
+function matchSlots(slots, recs, zone) {
+  const used = new Set();
+  const res = slots.map(sl => {
+    const found = recs.find(r => !used.has(r) && sl.s.some(t => typeMatches(t, r.type, zone)));
+    if (found) used.add(found);
+    return found || null;
+  });
+  return { res, extra: recs.filter(r => !used.has(r)) };
+}
+function recsOf(inter) { return inter.units.map(r => ({ type: UNIT[r.uid].type, label: UNIT[r.uid].label, rec: r })); }
+
+function onArrival(inter, u) {
+  say(unitSvcClass(u), `${u.label} sur les lieux (#${inter.num}).`);
+  if (inter.firstArrivalAt !== null) return;
+  const sc = inter.sc;
+  // Le bilan vient du premier moyen utile arrivé sur place, pas d'un moyen engagé à tort
+  const useful = slotsOf(sc).some(sl => sl.s.some(t => typeMatches(t, u.type, inter.loc.zone)));
+  if (!useful) { say(unitSvcClass(u), `${u.label} : situation hors de nos compétences, nous attendons les secours adaptés.`); return; }
+  inter.firstArrivalAt = elapsed;
+  if (sc.bilan) say(unitSvcClass(u), `${u.label} : ${sc.bilan}`);
+  const expectedSlots = sc.expected.map(s => ({ s, late: false })).sort((a, b) => a.s.length - b.s.length);
+  const { res } = matchSlots(expectedSlots, recsOf(inter), inter.loc.zone);
+  expectedSlots.forEach((sl, i) => {
+    if (!res[i]) {
+      inter.requests.push({ s: sl.s });
+      say(unitSvcClass(u), `${u.label} : demande ${sl.s.map(t => SLOT_LABEL[t]).join(" ou ")} en renfort.`);
+    }
+  });
+  for (const s of sc.lateNeeds || []) inter.requests.push({ s });
+  if (sc.lateMsg) say(unitSvcClass(u), sc.lateMsg);
+  dirty.right = true;
+}
+
+function updateUnit(u, gdt) {
+  switch (u.status) {
+    case "alerte":
+      u.timer -= gdt;
+      if (u.timer <= 0) {
+        const inter = interById(u.inter);
+        if (!inter) { goHome(u); break; }
+        u.status = "parti";
+        sendTo(u, inter.loc, inter.loc.nodes);
+        dirty.right = true;
+      }
+      break;
+    case "parti":
+      if (move(u, gdt)) {
+        const inter = interById(u.inter);
+        u.status = "surplace";
+        u.timer = TYPES[u.type].onScene * rand(0.85, 1.15);
+        if (inter) onArrival(inter, u);
+        dirty.right = dirty.left = true;
+      }
+      break;
+    case "surplace":
+      u.timer -= gdt;
+      if (u.timer <= 0) {
+        const inter = interById(u.inter);
+        const canCarry = TYPES[u.type].transport;
+        if (inter && inter.sc.transport && canCarry && !inter.transportBy) {
+          inter.transportBy = u.id;
+          u.status = "transport";
+          sendTo(u, HOSPITAL, [HOSPITAL.node], 0.85);
+          say(unitSvcClass(u), `${u.label} : transport vers ${HOSPITAL_NAME} (#${inter.num}).`);
+        } else if (inter && u.type === "SMUR" && inter.transportBy && UNIT[inter.transportBy].status === "transport") {
+          u.status = "transport";
+          sendTo(u, HOSPITAL, [HOSPITAL.node], 0.85);
+        } else {
+          goHome(u);
+        }
+        dirty.right = dirty.left = true;
+      }
+      break;
+    case "transport":
+      if (move(u, gdt)) { u.status = "hopital"; u.timer = 240; dirty.right = true; }
+      break;
+    case "hopital":
+      u.timer -= gdt;
+      if (u.timer <= 0) { goHome(u); dirty.right = dirty.left = true; }
+      break;
+    case "retour":
+      if (move(u, gdt)) { u.status = "dispo"; u.x = u.base.x; u.y = u.base.y; dirty.right = true; }
+      break;
+  }
+}
+
+function update(gdt) {
+  elapsed += gdt;
+  if (started && elapsed >= nextSpawn) {
+    const ringing = calls.filter(c => !c.answered).length;
+    if (ringing < 3) spawnCall();
+    nextSpawn = elapsed + rand(240, 480);
+  }
+  for (const c of calls.slice()) {
+    if (!c.answered && elapsed - c.ringStart > RING_TIMEOUT) {
+      calls.splice(calls.indexOf(c), 1);
+      stats.lost++;
+      say("sys", `Appel ${c.numero} perdu : l'appelant a raccroché après 6 minutes d'attente.`);
+      if (selected && selected.id === c.id) selected = null;
+      dirty.left = dirty.right = true;
+    }
+  }
+  for (const u of UNITS) if (u.status !== "dispo") updateUnit(u, gdt);
+  for (const inter of inters) {
+    if (!inter.closed && inter.units.length && inter.units.every(r => UNIT[r.uid].inter !== inter.id)) {
+      closeInter(inter, `Intervention #${inter.num} terminée.`);
+    }
+  }
+}
+
+function forceClose(inter) {
+  for (const r of inter.units) {
+    const u = UNIT[r.uid];
+    if (u.inter === inter.id) goHome(u);
+  }
+  closeInter(inter, `Intervention #${inter.num} clôturée par l'opérateur, moyens rappelés.`);
+}
+
+function closeInter(inter, text) {
+  if (inter.closed) return;
+  inter.closed = true;
+  inter.closedAt = elapsed;
+  inter.score = scoreInter(inter);
+  stats.done++; stats.total += inter.score.total;
+  say("sys", `${text} Score : ${inter.score.total}/100.`);
+  dirty.left = dirty.right = true;
+}
+
+/* =========================================================
+   7. Score
+   ========================================================= */
+function fmtDur(s) { s = Math.max(0, Math.round(s)); return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`; }
+function fmtMin(s) { return `${Math.max(1, Math.round(s / 60))} min`; }
+function fmtClock(s) {
+  const t = Math.floor(START_CLOCK + s);
+  return [Math.floor(t / 3600) % 24, Math.floor(t / 60) % 60, t % 60].map(v => String(v).padStart(2, "0")).join(":");
+}
+
+function scoreInter(inter) {
+  const sc = inter.sc, zone = inter.loc.zone, notes = [];
+  const recs = recsOf(inter);
+  const slots = slotsOf(sc);
+  const { res, extra } = matchSlots(slots, recs, zone);
+
+  // Pertinence des moyens (40)
+  let credit = 0, pen = 0;
+  slots.forEach((sl, i) => {
+    const m = res[i];
+    if (!m) notes.push(`Manquait ${sl.s.map(t => SLOT_LABEL[t]).join(" ou ")}.`);
+    else if (m.rec.late && !sl.late) { credit += 0.6; notes.push(`${m.label} engagé seulement en renfort.`); }
+    else credit += 1;
+  });
+  const tol = sc.tolerated || [];
+  let wrongCount = 0;
+  for (const r of extra) {
+    if (wrongZone({ type: r.type }, zone)) { wrongCount++; pen += 0.25; notes.push(`${r.label} engagé hors de sa zone de compétence.`); }
+    else if (!tol.includes(r.type)) { pen += 0.15; notes.push(`${r.label} n'était pas nécessaire.`); }
+  }
+  let pert = slots.length ? clamp(credit / slots.length - pen, 0, 1) : clamp(1 - 0.25 * recs.length, 0, 1);
+  if (!slots.length && recs.length) notes.push("Aucun moyen ne devait être engagé.");
+
+  // Délais (25)
+  let delai = 1;
+  const T1 = sc.prio === "P1" ? 120 : 240;
+  if (slots.length) {
+    if (inter.firstEngageAt === null) { delai = 0; }
+    else {
+      const t = inter.firstEngageAt - inter.createdAt + inter.qcost;
+      delai = clamp(1 - (t - T1) / 360, 0, 1);
+      notes.push(`Premier engagement à ${fmtDur(t)} après la sonnerie (objectif ${fmtDur(T1)}).`);
+    }
+  }
+
+  // Questionnement (20)
+  const keys = sc.allQ.filter(q => q.key);
+  const keyIds = new Set(keys.map(q => q.id));
+  const askedKeys = keys.filter(q => inter.asked.has(q.id));
+  const useless = [...inter.asked].filter(id => !keyIds.has(id)).length;
+  let quest = keys.length ? askedKeys.length / keys.length : 1;
+  quest = clamp(quest - 0.1 * Math.max(0, useless - 1), 0, 1);
+  keys.filter(q => !inter.asked.has(q.id)).slice(0, 2).forEach(q => notes.push(`Question clé non posée : « ${q.q} »`));
+
+  // Coordination (15)
+  const recv = svcOfNumero(inter.received);
+  const required = new Set();
+  for (const sl of slots) {
+    const svcs = new Set(sl.s.map(t => t === "PATROUILLE" ? "17" : TYPES[t].svc));
+    if (svcs.size === 1) { const v = [...svcs][0]; if (v !== recv) required.add(v); }
+  }
+  let coord = required.size ? [...required].filter(v => inter.open.has(v)).length / required.size : 1;
+  [...required].filter(v => !inter.open.has(v)).forEach(v => notes.push(`Le ${v} (${SVC_NAME[v]}) n'a pas été prévenu.`));
+  const usedSvcs = new Set(recs.map(r => TYPES[r.type].svc));
+  for (const v of inter.open) {
+    if (v !== recv && !usedSvcs.has(v) && !required.has(v)) { coord -= 0.15; notes.push(`Interconnexion inutile avec le ${v}.`); }
+  }
+  coord = clamp(coord - 0.25 * wrongCount, 0, 1);
+
+  const total = Math.round(40 * pert + 25 * delai + 20 * quest + 15 * coord);
+  return { total, parts: [["Pertinence des moyens", pert, 40], ["Délais", delai, 25], ["Questionnement", quest, 20], ["Coordination", coord, 15]], notes };
+}
+function verdict(t) { return t >= 85 ? ["Excellent", "sc-good"] : t >= 65 ? ["Correct", "sc-good"] : t >= 40 ? ["À revoir", "sc-warn"] : ["Insuffisant", "sc-crit"]; }
+
+/* =========================================================
+   8. Interface
+   ========================================================= */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+
+function renderHead() {
+  $("#clock").textContent = fmtClock(elapsed);
+  $("#st-score").textContent = stats.done ? Math.round(stats.total / stats.done) + "/100" : "–";
+  $("#st-done").textContent = stats.done;
+  $("#st-lost").textContent = stats.lost;
+}
+
+function renderLeft() {
+  const cl = $("#calls");
+  $("#calls-count").textContent = calls.length;
+  cl.innerHTML = calls.length ? calls.map(c => {
+    const sel = selected && selected.id === c.id ? " sel" : "";
+    const ring = c.answered ? "" : " ringing";
+    const t1 = c.answered ? (c.addressKnown ? esc(c.loc.short) : "En ligne") : "Appel entrant";
+    const t2 = c.answered ? (c.nature ? esc(NATURE[c.nature].label) : "Questionnement en cours") : "Cliquez pour décrocher";
+    return `<button class="row${sel}${ring}" type="button" data-select="call" data-id="${c.id}">
+      <span class="badge ${numClass(c.numero, c.loc.zone)}">${c.numero}</span>
+      <span class="mid"><span class="t1">${t1}</span><span class="t2">${t2}</span></span>
+      <span class="side" data-since="${c.ringStart}">${fmtDur(elapsed - c.ringStart)}</span></button>`;
+  }).join("") : `<div class="empty">${started ? "Aucun appel en attente." : "La garde n'a pas commencé."}</div>`;
+
+  const il = $("#inters");
+  const active = inters.filter(i => !i.closed), closed = inters.filter(i => i.closed).slice(0, 6);
+  $("#inters-count").textContent = active.length;
+  const rowFor = i => {
+    const sel = selected && selected.id === i.id ? " sel" : "";
+    const label = i.nature ? NATURE[i.nature].label : "Nature non qualifiée";
+    let side;
+    if (i.closed) { const [, cls] = verdict(i.score.total); side = `<span class="score-pill ${cls}">${i.score.total}</span>`; }
+    else side = `<span data-since="${i.createdAt}">${fmtDur(elapsed - i.createdAt)}</span>`;
+    const counts = {};
+    if (!i.closed) for (const r of i.units) { const u = UNIT[r.uid]; if (u.inter === i.id) counts[u.status] = (counts[u.status] || 0) + 1; }
+    const chips = Object.entries(counts).map(([s, n]) => `<span class="chip">${n} ${STATUS_LABEL[s].toLowerCase()}</span>`).join("");
+    const reqOpen = !i.closed && openRequests(i).length ? `<span class="chip" style="color:var(--warn);border-color:var(--warn)">renfort demandé</span>` : "";
+    return `<button class="row${sel}" type="button" data-select="inter" data-id="${i.id}">
+      <span class="badge ${numClass(i.received, i.loc.zone)}">#${i.num}</span>
+      <span class="mid"><span class="t1">${esc(label)}</span><span class="t2">${esc(i.loc.address)}</span></span>
+      <span class="side">${side}</span>
+      ${chips || reqOpen ? `<span class="chips">${reqOpen}${chips}</span>` : ""}</button>`;
+  };
+  il.innerHTML = (active.length || closed.length)
+    ? active.map(rowFor).join("") + (closed.length ? `<div class="sec-title" style="border-top:1px solid var(--line)">Clôturées</div>` + closed.map(rowFor).join("") : "")
+    : `<div class="empty">Aucune intervention.</div>`;
+}
+
+function renderRadio() {
+  $("#radio-count").textContent = radio.length;
+  const last = renderRadio.lastId || 0;
+  $("#radio").innerHTML = radio.length ? radio.map(m => `<li class="${m.id > last ? "fresh" : ""}"><span class="tm">${fmtClock(m.t)}</span>
+    <span class="src ${m.svc}">${m.svc === "sys" ? "SALLE" : ({ s18: "18", s15: "15", s17: "17", s17g: "17" }[m.svc] || "")}</span>
+    <span>${esc(m.text)}</span></li>`).join("") : `<li><span></span><span></span><span style="color:var(--muted)">Le trafic radio s'affichera ici.</span></li>`;
+  renderRadio.lastId = radio.length ? radio[0].id : 0;
+}
+
+function svcBlock(obj) {
+  return `<div class="svc-row">${["18", "15", "17"].map(v => {
+    const open = obj.open.has(v);
+    const color = v === "17" ? "n17" : "n" + v;
+    return `<div class="svc ${open ? "open" : ""}">
+      <span class="lab"><span class="badge ${color}" style="min-width:28px;height:20px;font-size:12px">${v}</span>${SVC_NAME[v].split(" /")[0]}</span>
+      ${open ? `<span class="state">En ligne</span>` : `<button class="btn small" type="button" data-ic="${v}">Interconnecter</button>`}
+    </div>`;
+  }).join("")}</div>`;
+}
+
+function unitList(obj, loc) {
+  const groups = [
+    ["18", "Pompiers", u => TYPES[u.type].svc === "18"],
+    ["15", "SAMU", u => TYPES[u.type].svc === "15"],
+    ["17P", "Police nationale", u => TYPES[u.type].force === "P"],
+    ["17G", "Gendarmerie", u => TYPES[u.type].force === "G"],
+  ];
+  return `<div class="units">${groups.map(([key, name, f]) => {
+    const svc = key.slice(0, 2);
+    const locked = !obj.open.has(svc);
+    const all = UNITS.filter(f).map(u => ({ u, eta: loc && u.status === "dispo" ? etaFor(u, loc) : Infinity }))
+      .sort((a, b) => (a.u.status === "dispo" ? 0 : 1) - (b.u.status === "dispo" ? 0 : 1) || a.eta - b.eta);
+    // Par défaut : les 5 moyens disponibles les plus proches, plus ceux déjà cochés
+    const us = obj.showAll ? all : all.filter((x, k) => (x.u.status === "dispo" && k < 5) || obj.sel.has(x.u.id));
+    const dotColor = key === "17G" ? "var(--s17g)" : key === "17P" ? "var(--s17)" : `var(--s${svc})`;
+    const zoneNote = loc && svc === "17" && ((key === "17P") !== (loc.zone === "P")) ? " · hors zone" : "";
+    return `<div class="ugroup"><div class="gh"><i class="sw" style="background:${dotColor}"></i>${name}
+      <span class="lock">${locked ? "· interconnexion requise" : ""}${zoneNote}</span></div>
+      ${us.map(({ u, eta }) => {
+        const off = u.status !== "dispo";
+        const checked = obj.sel.has(u.id) ? "checked" : "";
+        const right = off ? STATUS_LABEL[u.status] : (loc ? fmtMin(eta) : "");
+        return `<label class="unit ${off ? "off" : ""}"><input type="checkbox" id="cb-${u.id}" data-uid="${u.id}" ${checked} ${off ? "disabled" : ""}>
+          <i class="dot" style="background:${dotColor}"></i>
+          <span class="nm">${esc(u.label)}<small>${esc(TYPES[u.type].long)}</small></span>
+          <span class="eta">${right}</span></label>`;
+      }).join("")}</div>`;
+  }).join("")}
+  <button class="btn small" type="button" data-act="showall">${obj.showAll ? "N'afficher que les plus proches" : `Afficher les ${UNITS.length} moyens du secteur`}</button></div>`;
+}
+
+function engageHint(obj, needAddress) {
+  if (needAddress) return ["Obtenez d'abord l'adresse de l'intervention.", true];
+  if (!obj.sel.size) return ["Cochez des moyens, ou proposez le départ type de la nature choisie.", false];
+  const locked = new Set([...obj.sel].map(id => TYPES[UNIT[id].type].svc).filter(v => !obj.open.has(v)));
+  if (locked.size) return [`Interconnectez avec le ${[...locked].join(" et le ")} pour engager ces moyens.`, true];
+  return ["", false];
+}
+
+function renderCallPane(c) {
+  const sinceCls = numClass(c.numero, c.loc.zone);
+  if (!c.answered) {
+    return `<div class="pane-head"><span class="badge ${sinceCls}">${c.numero}</span>
+      <div><div class="eyebrow">Appel entrant</div><div class="pane-title">Ça sonne</div></div>
+      <span class="since" data-since="${c.ringStart}">${fmtDur(elapsed - c.ringStart)}</span></div>
+      <div class="actions"><button class="btn primary" type="button" data-act="answer">Décrocher</button>
+      <p class="hint">Le délai de décroché compte dans le score. L'appelant raccroche après 6 minutes.</p></div>`;
+  }
+  const [hint, hintWarn] = engageHint(c, !c.addressKnown);
+  const canEngage = c.addressKnown && c.sel.size && !hintWarn;
+  return `<div class="pane-head"><span class="badge ${sinceCls}">${c.numero}</span>
+      <div><div class="eyebrow">Appel en ligne</div><div class="pane-title">${c.nature ? esc(NATURE[c.nature].label) : "Questionnement"}</div></div>
+      <span class="since" data-since="${c.ringStart}">${fmtDur(elapsed - c.ringStart)}</span></div>
+    <div class="block">
+      ${c.addressKnown ? `<div class="addr">${esc(c.loc.address)}<span class="zone">${c.loc.zone === "P" ? "zone police" : "zone gendarmerie"}</span></div>` : `<div class="addr" style="color:var(--muted)">Adresse inconnue</div>`}
+      <ol class="transcript" id="transcript">${c.transcript.map(l => `<li class="${l.who}">${esc(l.text)}</li>`).join("")}</ol>
+    </div>
+    <div class="block"><h3>Questions</h3><div class="qgrid">
+      ${c.sc.allQ.map(q => `<button class="q${q.special ? " special" : ""}" type="button" data-q="${q.id}" ${c.asked.has(q.id) ? "disabled" : ""}>${esc(q.q)}</button>`).join("")}
+    </div></div>
+    <div class="block"><h3>Qualification</h3>
+      <div class="inline"><select id="nature-${c.id}" data-nature aria-label="Nature de l'intervention">
+        <option value="">Choisir la nature…</option>
+        ${NATURES.map(n => `<option value="${n.id}" ${c.nature === n.id ? "selected" : ""}>${esc(n.label)}</option>`).join("")}
+      </select><button class="btn" type="button" data-act="propose" ${c.nature && c.addressKnown ? "" : "disabled"}>Proposer le départ type</button></div>
+      ${c.hint ? `<p class="hint">${esc(c.hint)}</p>` : ""}
+    </div>
+    <div class="block"><h3>Services</h3>${svcBlock(c)}</div>
+    <div class="block"><h3>Moyens</h3>${unitList(c, c.addressKnown ? c.loc : null)}</div>
+    <div class="actions">
+      <div class="inline">
+        <button class="btn primary" type="button" data-act="engage" ${canEngage ? "" : "disabled"}>${c.sel.size ? `Engager ${c.sel.size} moyen${c.sel.size > 1 ? "s" : ""}` : "Engager"}</button>
+        <button class="btn" type="button" data-act="nothing">Clôturer sans engagement</button>
+      </div>
+      ${hint ? `<p class="hint ${hintWarn ? "warn" : ""}">${esc(hint)}</p>` : ""}
+    </div>`;
+}
+
+/* Demandes de renfort encore ouvertes : après la première arrivée, toute case attendue non couverte */
+function openRequests(i) {
+  if (i.firstArrivalAt === null) return [];
+  const slots = slotsOf(i.sc);
+  const { res } = matchSlots(slots, recsOf(i), i.loc.zone);
+  return slots.filter((_, k) => !res[k]);
+}
+
+function renderInterPane(i) {
+  const head = `<div class="pane-head"><span class="badge ${numClass(i.received, i.loc.zone)}">#${i.num}</span>
+    <div><div class="eyebrow">Intervention · appel ${i.received}</div><div class="pane-title">${i.nature ? esc(NATURE[i.nature].label) : "Nature non qualifiée"}</div></div>
+    <span class="since" ${i.closed ? "" : `data-since="${i.createdAt}"`}>${fmtDur((i.closed ? i.closedAt : elapsed) - i.createdAt)}</span></div>
+    <div class="block"><div class="addr">${esc(i.loc.address)}<span class="zone">${i.loc.zone === "P" ? "zone police" : "zone gendarmerie"}</span></div></div>`;
+
+  const unitsRows = i.units.length ? i.units.map(r => {
+    const u = UNIT[r.uid];
+    const mine = u.inter === i.id;
+    const st = mine ? u.status : (u.status === "dispo" ? "dispo" : "retour");
+    const eta = mine && u.status === "parti" ? ` data-eta="${u.id}"` : "";
+    return `<div class="unit" style="cursor:default"><span></span><i class="dot" style="background:var(--${unitSvcClass(u)})"></i>
+      <span class="nm">${esc(u.label)}${r.late ? "<small>renfort</small>" : ""}</span>
+      <span class="status st-${st}"${eta}>${etaText(u, st)}</span></div>`;
+  }).join("") : `<p class="hint">Aucun moyen engagé.</p>`;
+
+  if (i.closed) {
+    const s = i.score, [vtxt, vcls] = verdict(s.total);
+    return head + `<div class="block"><h3>Moyens engagés</h3><div class="units">${unitsRows}</div></div>
+      <div class="block scorecard"><h3>Débriefing</h3>
+        <div class="total"><span class="num">${s.total}</span><span class="of">/100</span><span class="verdict ${vcls}">${vtxt}</span></div>
+        <div class="bars">${s.parts.map(([n, v, w]) => `<div class="bar"><span>${n}</span><span class="track"><span class="fill" style="width:${Math.round(v * 100)}%;display:block"></span></span><span class="pts">${Math.round(v * w)}/${w}</span></div>`).join("")}</div>
+        <p class="hint">Situation réelle : <strong>${esc(NATURE[i.sc.nature].label)}</strong>.${i.nature && i.nature !== i.sc.nature ? " Votre qualification était différente." : ""}</p>
+        ${s.notes.length ? `<ul class="notes">${s.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>` : `<p class="hint">Rien à redire.</p>`}
+      </div>`;
+  }
+  const reqs = openRequests(i);
+  const [hint, hintWarn] = engageHint(i, false);
+  return head + (reqs.length ? `<div class="block"><div class="req"><strong>Renfort demandé</strong>
+      ${reqs.map(r => `<span>${esc(r.s.map(t => SLOT_LABEL[t]).join(" ou "))}</span>`).join("")}</div></div>` : "")
+    + `<div class="block"><h3>Moyens engagés</h3><div class="units">${unitsRows}</div></div>
+    <div class="block"><h3>Services</h3>${svcBlock(i)}</div>
+    <div class="block"><h3>Ajouter des moyens</h3>${unitList(i, i.loc)}</div>
+    <div class="actions"><div class="inline">
+      <button class="btn primary" type="button" data-act="reinforce" ${i.sel.size && !hintWarn ? "" : "disabled"}>Engager en renfort</button>
+      <button class="btn" type="button" data-act="close">Clôturer et rappeler les moyens</button></div>
+      ${i.sel.size && hint ? `<p class="hint ${hintWarn ? "warn" : ""}">${esc(hint)}</p>` : ""}
+    </div>`;
+}
+
+function renderIdle() {
+  return `<div class="pane-head"><span class="badge">112</span><div><div class="eyebrow">Poste de traitement</div>
+      <div class="pane-title">${started ? "En attente d'appel" : "Prise de garde, 21 h 40"}</div></div><span></span></div>
+    <div class="block idle">
+      <p>Vous tenez la plateforme commune de Nice et de sa région : le CTA-CODIS 06 (18), le SAMU 06 à l'hôpital Pasteur (15), la police nationale et treize brigades de gendarmerie (17).</p>
+      <ol class="steps">
+        <li>Décrochez un appel dans la file de gauche.</li>
+        <li>Posez les bonnes questions, à commencer par l'adresse.</li>
+        <li>Qualifiez la nature, proposez le départ type, ajustez.</li>
+        <li>Interconnectez avec les autres services avant d'engager leurs moyens.</li>
+        <li>Suivez l'intervention et répondez aux demandes de renfort.</li>
+      </ol>
+      <p class="disclaimer">Le 17 aboutit à la police nationale dans la zone en pointillés (Nice, Saint-Laurent-du-Var, Cagnes-sur-Mer, Villefranche-sur-Mer) et à la gendarmerie partout ailleurs. Les centres marqués « CPI » ou situés dans l'arrière-pays partent plus lentement : ce sont des volontaires d'astreinte.</p>
+    </div>
+    <div class="actions">${started ? `<p class="hint">Le prochain appel arrive bientôt.</p>` : `<button class="btn primary" type="button" data-act="start">Prendre la garde</button>`}
+      <p class="disclaimer">Ceci est un jeu. En cas d'urgence réelle, composez le 15, le 17, le 18 ou le 112.</p></div>`;
+}
+
+function renderRight() {
+  const pane = $("#pane");
+  const prevScroll = pane.parentElement.scrollTop;
+  let html;
+  if (selected && selected.kind === "call") { const c = calls.find(x => x.id === selected.id); html = c ? renderCallPane(c) : renderIdle(); if (!c) selected = null; }
+  else if (selected && selected.kind === "inter") { const i = interById(selected.id); html = i ? renderInterPane(i) : renderIdle(); }
+  else html = renderIdle();
+  pane.innerHTML = html;
+  pane.parentElement.scrollTop = prevScroll;
+  const tr = $("#transcript");
+  if (tr) tr.scrollTop = tr.scrollHeight;
+}
+
+function etaText(u, st) {
+  if (st === "parti" && u.path) return `${STATUS_LABEL.parti} · ${fmtMin(pathRemaining(u) / u.speedNow)}`;
+  return STATUS_LABEL[st];
+}
+function pathRemaining(u) {
+  let d = 0, p = { x: u.x, y: u.y };
+  for (let k = u.pi + 1; k < u.path.length; k++) { d += dist(p, u.path[k]); p = u.path[k]; }
+  return d;
+}
+
+/* --- Événements --- */
+function currentObj() {
+  if (!selected) return null;
+  return selected.kind === "call" ? calls.find(c => c.id === selected.id) : interById(selected.id);
+}
+document.addEventListener("click", e => {
+  const sel = e.target.closest("[data-select]");
+  if (sel) {
+    selected = { kind: sel.dataset.select, id: sel.dataset.id };
+    if (selected.kind === "call") { const c = calls.find(x => x.id === selected.id); if (c && !c.answered && started && !paused) answer(c); }
+    dirty.left = dirty.right = true; return;
+  }
+  const obj = currentObj();
+  const q = e.target.closest("[data-q]");
+  if (q && obj && selected.kind === "call") { ask(obj, q.dataset.q); return; }
+  const ic = e.target.closest("[data-ic]");
+  if (ic && obj) { interconnect(obj, ic.dataset.ic); return; }
+  const act = e.target.closest("[data-act]");
+  if (!act) return;
+  const a = act.dataset.act;
+  if (a === "start") return startShift();
+  if (!obj) return;
+  if (a === "showall") { obj.showAll = !obj.showAll; dirty.right = true; }
+  else if (a === "answer") answer(obj);
+  else if (a === "propose") { obj.hint = propose(obj, obj.loc, obj.nature); dirty.right = true; }
+  else if (a === "engage") engageCall(obj);
+  else if (a === "nothing") { obj.sel.clear(); engageCall(obj); }
+  else if (a === "reinforce") engage(obj, [...obj.sel]);
+  else if (a === "close") forceClose(obj);
+});
+document.addEventListener("change", e => {
+  const obj = currentObj();
+  if (!obj) return;
+  if (e.target.matches("[data-uid]")) {
+    const id = e.target.dataset.uid;
+    if (e.target.checked) obj.sel.add(id); else obj.sel.delete(id);
+    dirty.right = true;
+  } else if (e.target.matches("[data-nature]")) {
+    obj.nature = e.target.value; obj.hint = ""; dirty.right = dirty.left = true;
+  }
+});
+
+function startShift() {
+  started = true; paused = false; nextSpawn = elapsed + 12;
+  $("#btn-pause").textContent = "Pause";
+  say("sys", "Prise de garde. Tous les moyens sont disponibles.");
+  dirty.left = dirty.right = true;
+}
+$("#btn-pause").addEventListener("click", () => {
+  if (!started) return startShift();
+  paused = !paused;
+  $("#btn-pause").textContent = paused ? "Reprendre" : "Pause";
+});
+$("#btn-speed").addEventListener("click", () => {
+  speed = speed === 1 ? 2 : speed === 2 ? 4 : 1;
+  $("#btn-speed").textContent = `Vitesse ×${speed}`;
+});
+$("#btn-sound").addEventListener("click", () => {
+  soundOn = !soundOn;
+  $("#btn-sound").setAttribute("aria-pressed", String(soundOn));
+  if (soundOn) beep();
+});
+
+/* Sonnerie : deux bips, uniquement si le son est activé */
+let audio = null;
+function beep() {
+  if (!soundOn) return;
+  try {
+    audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+    const t0 = audio.currentTime;
+    [0, 0.22].forEach(off => {
+      const o = audio.createOscillator(), g = audio.createGain();
+      o.frequency.value = 880; o.type = "sine";
+      g.gain.setValueAtTime(0.0001, t0 + off);
+      g.gain.exponentialRampToValueAtTime(0.15, t0 + off + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + off + 0.16);
+      o.connect(g).connect(audio.destination);
+      o.start(t0 + off); o.stop(t0 + off + 0.18);
+    });
+  } catch (err) { /* son indisponible */ }
+}
+
+/* =========================================================
+   9. Carte
+   ========================================================= */
+const canvas = $("#map"), ctx = canvas.getContext("2d");
+let view = { s: 1, ox: 0, oy: 0, w: 0, h: 0 };
+let colors = {};
+function readColors() {
+  const cs = getComputedStyle(document.documentElement);
+  for (const k of ["map-land", "map-forest", "map-water", "map-road", "map-road-edge", "map-block", "map-text", "map-zone",
+    "shield", "shield-ink", "s18", "s15", "s17", "s17g", "ink", "panel", "crit", "warn", "good", "muted", "motorway"]) colors[k] = cs.getPropertyValue("--" + k).trim();
+}
+readColors();
+try { matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readColors); } catch (err) {}
+new MutationObserver(readColors).observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+
+function resize() {
+  const r = canvas.getBoundingClientRect(), dpr = window.devicePixelRatio || 1;
+  canvas.width = Math.max(1, Math.round(r.width * dpr)); canvas.height = Math.max(1, Math.round(r.height * dpr));
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  const pad = 16;
+  const s = Math.min((r.width - pad * 2) / W, (r.height - pad * 2 - 30) / H);
+  view = { s, ox: (r.width - W * s) / 2, oy: (r.height - H * s) / 2 + 14, w: r.width, h: r.height };
+}
+new ResizeObserver(resize).observe(canvas);
+
+/* Blocs bâtis, générés une fois avec une graine fixe */
+function seeded(seed) { return () => { seed = (seed * 16807) % 2147483647; return seed / 2147483647; }; }
+const BLOCKS = [];
+(() => {
+  const rnd = seeded(42);
+  const cfg = { quartier: [34, 0.75], bourg: [22, 0.7], village: [9, 0.3] };
+  for (const k in NODES) {
+    const N = NODES[k], c = cfg[N.kind];
+    if (!c) continue;
+    for (let i = 0; i < c[0]; i++) {
+      const a = rnd() * Math.PI * 2, r = Math.sqrt(rnd()) * c[1] * KM;
+      const p = { x: N.x + Math.cos(a) * r, y: N.y + Math.sin(a) * r };
+      if (inPoly(p, SEA_POLY)) continue;
+      BLOCKS.push({ ...p, w: (0.08 + rnd() * 0.18) * KM, h: (0.08 + rnd() * 0.14) * KM });
+    }
+  }
+})();
+
+const X = x => view.ox + x * view.s, Y = y => view.oy + y * view.s;
+function poly(pts, close) {
+  ctx.beginPath();
+  pts.forEach((p, i) => i ? ctx.lineTo(X(p.x), Y(p.y)) : ctx.moveTo(X(p.x), Y(p.y)));
+  if (close) ctx.closePath();
+}
+function halo(text, x, y) {
+  ctx.lineWidth = 3; ctx.strokeStyle = colors["map-land"];
+  ctx.strokeText(text, x, y); ctx.fillText(text, x, y);
+}
+
+function draw(now) {
+  const { s, w, h } = view;
+  ctx.clearRect(0, 0, w, h);
+  ctx.fillStyle = colors["map-land"]; ctx.fillRect(0, 0, w, h);
+
+  // massifs boisés
+  ctx.fillStyle = colors["map-forest"];
+  for (const f of FORESTS) { ctx.beginPath(); ctx.ellipse(X(f.x), Y(f.y), f.rx * s, f.ry * s, 0.4, 0, Math.PI * 2); ctx.fill(); }
+
+  // mer
+  ctx.fillStyle = colors["map-water"];
+  poly(SEA_POLY, true); ctx.fill();
+  ctx.font = `italic 500 ${Math.max(11, 14 * s)}px "IBM Plex Sans", sans-serif`; ctx.textAlign = "center"; ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = colors["map-zone"]; ctx.globalAlpha = 0.7;
+  const bda = P(43.672, 7.262), med = P(43.648, 7.345);
+  ctx.fillText("Baie des Anges", X(bda.x), Y(bda.y));
+  ctx.fillText("Mer Méditerranée", X(med.x), Y(med.y));
+  ctx.globalAlpha = 1;
+
+  // Monaco, hors secteur
+  ctx.fillStyle = colors["map-block"]; ctx.globalAlpha = 0.6; poly(MONACO, true); ctx.fill(); ctx.globalAlpha = 1;
+  const mc = P(43.746, 7.426);
+  ctx.font = `600 ${Math.max(9, 11 * s)}px "Barlow Condensed", sans-serif`; ctx.fillStyle = colors.muted;
+  ctx.fillText("MONACO", X(mc.x), Y(mc.y) - 10); ctx.fillText("hors secteur", X(mc.x), Y(mc.y) + 2);
+
+  // fleuves
+  ctx.strokeStyle = colors["map-water"]; ctx.lineCap = "round"; ctx.lineJoin = "round";
+  for (const r of RIVERS) { ctx.lineWidth = Math.max(3, (r.name === "le Var" ? 0.22 : 0.12) * KM * s); poly(r.pts, false); ctx.stroke(); }
+  ctx.font = `italic 500 ${Math.max(10, 12 * s)}px "IBM Plex Sans", sans-serif`; ctx.fillStyle = colors["map-zone"];
+  for (const r of RIVERS) halo(r.name, X(r.at.x) - 18, Y(r.at.y));
+
+  // zone police nationale
+  ctx.save(); ctx.setLineDash([6, 5]); ctx.strokeStyle = colors["map-zone"]; ctx.lineWidth = 1.5;
+  poly(ZPN, true); ctx.stroke(); ctx.restore();
+  const zl = P(43.769, 7.232);
+  ctx.fillStyle = colors["map-zone"]; ctx.font = `600 ${Math.max(10, 12 * s)}px "Barlow Condensed", sans-serif`;
+  halo("ZONE POLICE", X(zl.x), Y(zl.y));
+
+  // routes
+  for (const pass of ["edge", "road"]) {
+    ctx.strokeStyle = colors[pass === "edge" ? "map-road-edge" : "map-road"];
+    for (const e of EDGES) {
+      const base = e.road === "A 8" ? 0.32 : e.urban ? 0.16 : 0.22;
+      ctx.lineWidth = Math.max(pass === "edge" ? 3 : 1.5, (pass === "edge" ? base + 0.12 : base) * KM * s);
+      ctx.beginPath(); ctx.moveTo(X(NODES[e.a].x), Y(NODES[e.a].y)); ctx.lineTo(X(NODES[e.b].x), Y(NODES[e.b].y)); ctx.stroke();
+    }
+  }
+  // bâti
+  ctx.fillStyle = colors["map-block"];
+  for (const b of BLOCKS) ctx.fillRect(X(b.x - b.w / 2), Y(b.y - b.h / 2), b.w * s, b.h * s);
+
+  // cartouches routières : rouge pour l'autoroute, jaune pour les routes métropolitaines
+  ctx.font = `600 ${Math.max(9, 10 * s)}px "IBM Plex Mono", monospace`; ctx.textBaseline = "middle";
+  for (const e of EDGES) {
+    if (!e.shield || e.len < 2.2 * KM || s < 0.4) continue;
+    const mx = X((NODES[e.a].x + NODES[e.b].x) / 2), my = Y((NODES[e.a].y + NODES[e.b].y) / 2);
+    const tw = ctx.measureText(e.road).width + 8, motorway = e.road.startsWith("A");
+    ctx.fillStyle = motorway ? colors.motorway : colors.shield; ctx.fillRect(mx - tw / 2, my - 7, tw, 14);
+    ctx.strokeStyle = colors["shield-ink"]; ctx.lineWidth = 0.8; ctx.strokeRect(mx - tw / 2, my - 7, tw, 14);
+    ctx.fillStyle = motorway ? "#ffffff" : colors["shield-ink"]; ctx.fillText(e.road, mx, my + 0.5);
+  }
+
+  // noms de communes et quartiers
+  ctx.textBaseline = "alphabetic";
+  for (const k in NODES) {
+    const N = NODES[k];
+    if (N.kind === "jonction") continue;
+    if (N.kind === "quartier") {
+      if (s < 0.75) continue;
+      ctx.font = `500 ${Math.max(9, 10 * s)}px "Barlow Condensed", sans-serif`; ctx.fillStyle = colors.muted;
+      halo(N.name, X(N.x), Y(N.y) + 14);
+      continue;
+    }
+    const big = N.kind === "bourg";
+    ctx.font = `${big ? 700 : 600} ${Math.max(10, (big ? 14 : 12) * s)}px "Barlow Condensed", sans-serif`;
+    ctx.fillStyle = colors["map-text"];
+    halo(N.name, X(N.x), Y(N.y) - 0.45 * KM * s - 4);
+  }
+  const nl = P(43.7125, 7.2560);
+  ctx.font = `700 ${Math.max(16, 26 * s)}px "Barlow Condensed", sans-serif`; ctx.fillStyle = colors["map-text"];
+  halo("NICE", X(nl.x), Y(nl.y));
+
+  // bases
+  ctx.font = `600 9px "IBM Plex Mono", monospace`; ctx.textBaseline = "middle";
+  for (const b of BASES) {
+    const c = b.svc === "17" ? (b.force === "G" ? colors.s17g : colors.s17) : colors["s" + b.svc];
+    const bx = X(b.x), by = Y(b.y);
+    ctx.fillStyle = c; roundRect(bx - 9, by - 6, 18, 12, 3); ctx.fill();
+    ctx.fillStyle = colors.panel; ctx.fillText(b.svc, bx, by + 0.5);
+  }
+
+  // appels localisés (adresse connue, pas encore engagés)
+  const pulse = (Math.sin(now / 300) + 1) / 2;
+  for (const c of calls) {
+    if (!c.addressKnown) continue;
+    const cx = X(c.loc.x), cy = Y(c.loc.y);
+    ctx.save(); ctx.setLineDash([3, 3]); ctx.strokeStyle = colors.ink; ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(cx, cy, 10 + pulse * 3, 0, Math.PI * 2); ctx.stroke(); ctx.restore();
+    ctx.fillStyle = colors.ink; ctx.font = `600 11px "IBM Plex Mono", monospace`; ctx.fillText("?", cx, cy + 0.5);
+  }
+
+  // interventions
+  for (const i of inters) {
+    if (i.closed) continue;
+    const cx = X(i.loc.x), cy = Y(i.loc.y);
+    const arrived = i.firstArrivalAt !== null;
+    const isSel = selected && selected.id === i.id;
+    if (!arrived) {
+      ctx.strokeStyle = colors.crit; ctx.globalAlpha = 1 - pulse * 0.7; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.arc(cx, cy, 12 + pulse * 8, 0, Math.PI * 2); ctx.stroke(); ctx.globalAlpha = 1;
+    }
+    ctx.fillStyle = arrived ? colors.warn : colors.crit;
+    ctx.beginPath(); ctx.moveTo(cx, cy - 11); ctx.lineTo(cx + 9, cy); ctx.lineTo(cx, cy + 11); ctx.lineTo(cx - 9, cy); ctx.closePath(); ctx.fill();
+    if (isSel) { ctx.strokeStyle = colors.ink; ctx.lineWidth = 2; ctx.stroke(); }
+    ctx.fillStyle = colors.panel; ctx.font = `600 9px "IBM Plex Mono", monospace`; ctx.fillText(String(i.num), cx, cy + 0.5);
+  }
+
+  // véhicules en mouvement ou sur place
+  ctx.textBaseline = "alphabetic";
+  for (const u of UNITS) {
+    if (u.status === "dispo") continue;
+    const ux = X(u.x), uy = Y(u.y);
+    if (u.path && (u.status === "parti" || u.status === "transport")) {
+      ctx.save(); ctx.setLineDash([2, 4]); ctx.strokeStyle = colors[unitSvcClass(u)]; ctx.lineWidth = 1.5; ctx.globalAlpha = 0.7;
+      ctx.beginPath(); ctx.moveTo(ux, uy);
+      for (let k = u.pi + 1; k < u.path.length; k++) ctx.lineTo(X(u.path[k].x), Y(u.path[k].y));
+      ctx.stroke(); ctx.restore();
+    }
+    ctx.fillStyle = colors[unitSvcClass(u)];
+    ctx.beginPath(); ctx.arc(ux, uy, 5, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = colors.panel; ctx.lineWidth = 1.5; ctx.stroke();
+    if (u.status === "parti" || u.status === "transport" || u.status === "retour") {
+      ctx.font = `500 10px "IBM Plex Mono", monospace`; ctx.textAlign = "left";
+      ctx.fillStyle = colors["map-text"]; halo(u.label, ux + 8, uy - 6);
+      ctx.textAlign = "center";
+    }
+  }
+
+  // échelle
+  const bar = 5 * KM * s, bx = 16, byy = h - 16;
+  ctx.strokeStyle = colors["map-text"]; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(bx, byy - 5); ctx.lineTo(bx, byy); ctx.lineTo(bx + bar, byy); ctx.lineTo(bx + bar, byy - 5); ctx.stroke();
+  ctx.fillStyle = colors["map-text"]; ctx.font = `500 11px "IBM Plex Mono", monospace`; ctx.textAlign = "left";
+  ctx.fillText("5 km", bx + bar + 6, byy); ctx.textAlign = "center";
+}
+function roundRect(x, y, w, h, r) {
+  ctx.beginPath(); ctx.moveTo(x + r, y); ctx.arcTo(x + w, y, x + w, y + h, r); ctx.arcTo(x + w, y + h, x, y + h, r);
+  ctx.arcTo(x, y + h, x, y, r); ctx.arcTo(x, y, x + w, y, r); ctx.closePath();
+}
+
+canvas.addEventListener("click", e => {
+  const r = canvas.getBoundingClientRect(), mx = e.clientX - r.left, my = e.clientY - r.top;
+  let best = null, bd = 22;
+  for (const i of inters) { if (i.closed) continue; const d = Math.hypot(X(i.loc.x) - mx, Y(i.loc.y) - my); if (d < bd) { bd = d; best = { kind: "inter", id: i.id }; } }
+  for (const c of calls) { if (!c.addressKnown) continue; const d = Math.hypot(X(c.loc.x) - mx, Y(c.loc.y) - my); if (d < bd) { bd = d; best = { kind: "call", id: c.id }; } }
+  if (best) { selected = best; dirty.left = dirty.right = true; }
+});
+
+/* =========================================================
+   10. Boucle principale
+   ========================================================= */
+let last = performance.now(), tickAcc = 0, pointerDown = false;
+document.addEventListener("pointerdown", () => { pointerDown = true; });
+document.addEventListener("pointerup", () => { pointerDown = false; });
+document.addEventListener("pointercancel", () => { pointerDown = false; });
+function frame(now) {
+  const dt = Math.min(0.1, (now - last) / 1000);
+  last = now;
+  if (started && !paused) update(dt * SCALE * speed);
+  tickAcc += dt;
+  if (tickAcc > 0.25) {
+    tickAcc = 0;
+    renderHead();
+    document.querySelectorAll("[data-since]").forEach(el => { el.textContent = fmtDur(elapsed - Number(el.dataset.since)); });
+    document.querySelectorAll("[data-eta]").forEach(el => { const u = UNIT[el.dataset.eta]; if (u) el.textContent = etaText(u, u.status); });
+  }
+  if (!pointerDown) {
+    if (dirty.left) { renderLeft(); dirty.left = false; }
+    if (dirty.right) { renderRight(); dirty.right = false; }
+  }
+  if (dirty.radio) { renderRadio(); dirty.radio = false; }
+  if (view.w) draw(now);
+  requestAnimationFrame(frame);
+}
+resize();
+renderHead(); renderLeft(); renderRight(); renderRadio();
+requestAnimationFrame(frame);
+})();
+</script>
