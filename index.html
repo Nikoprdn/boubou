@@ -2,7 +2,7 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
 <meta name="theme-color" content="#14202e">
 <title>Le petit train de Boubou</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -10,7 +10,7 @@
 <style>
 :root{--bg:#14202e;--panel:#1b2a3a;--line:#2c3e52;--text:#f3f6f9;--accent:#f0a020}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-html,body{margin:0;height:100%;background:var(--bg);color:var(--text);font-family:Barlow,system-ui,sans-serif;overscroll-behavior:none}
+html,body{margin:0;height:100%;overflow:hidden;background:var(--bg);color:var(--text);font-family:Barlow,system-ui,sans-serif;overscroll-behavior:none}
 body{touch-action:manipulation}
 button{font-family:inherit;color:inherit;cursor:pointer}
 .hidden{display:none!important}
@@ -42,61 +42,67 @@ button{font-family:inherit;color:inherit;cursor:pointer}
 .go:active{transform:translateY(4px);box-shadow:0 2px 0 #1a7a32}
 
 /* ===== GAME ===== */
-#game{position:fixed;inset:0;display:grid;background:var(--bg);
+#game{position:fixed;left:0;top:0;width:100%;height:100%;display:grid;background:var(--bg);overflow:hidden;
   padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
-  grid-template-areas:"stage stage" "l r";grid-template-columns:2fr 1fr;grid-template-rows:1fr auto;
-  user-select:none;-webkit-user-select:none;-webkit-touch-callout:none}
+  grid-template-areas:"l stage r";grid-template-columns:clamp(104px,16vw,170px) minmax(0,1fr) clamp(104px,16vw,170px);grid-template-rows:minmax(0,1fr)}
+#game,#game *{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #stage{grid-area:stage;position:relative;min-height:0;min-width:0;overflow:hidden}
-#cv{position:absolute;inset:0;width:100%;height:100%;display:block;touch-action:none}
+#cv{position:absolute;left:0;top:0;width:100%;height:100%;display:block;touch-action:none}
 #ctlL{grid-area:l}#ctlR{grid-area:r}
-.ctlgrp{display:grid;gap:10px;padding:10px;background:var(--panel)}
-#ctlL{grid-template-columns:1fr 1fr 1fr}
-#ctlR{grid-template-columns:1fr 1.4fr}
-.ctl{position:relative;min-height:84px;border:none;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:6px;
-  touch-action:none;font:700 16px 'Barlow Condensed',sans-serif;letter-spacing:.5px;text-transform:uppercase;color:#fff;box-shadow:inset 0 -6px 0 rgba(0,0,0,.25);transition:transform .05s,filter .1s}
-.ctl svg{width:40px;height:40px;flex:none}
-.ctl.down{transform:scale(.95);filter:brightness(1.25)}
-.ctl:disabled{filter:grayscale(1) brightness(.6)}
-#bFwd{background:#2bb24c}#bBack{background:#2f78c8}#bBrake{background:#d23a30}#bHorn{background:#e5a21a}#bAct{background:#8a55d6}
-.ctl.ready{animation:pulse 1s infinite}
-@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,210,63,.95),inset 0 -6px 0 rgba(0,0,0,.25);transform:scale(1)}50%{box-shadow:0 0 0 8px rgba(255,210,63,.3),inset 0 -6px 0 rgba(0,0,0,.25);transform:scale(1.05)}}
-#top{position:absolute;left:8px;right:8px;top:8px;display:flex;gap:8px;align-items:center;pointer-events:none}
-.chip{background:rgba(20,32,46,.8);border-radius:14px;padding:4px 12px;font:700 22px 'Barlow Condensed',sans-serif;white-space:nowrap}
-#prog{position:relative;flex:1;height:40px;background:rgba(20,32,46,.55);border-radius:14px;min-width:0}
-#progLine{position:absolute;left:14px;right:14px;top:19px;height:4px;background:rgba(255,255,255,.35);border-radius:3px}
-#progIn{position:absolute;left:20px;right:20px;top:0;bottom:0}
-.pS{position:absolute;top:6px;width:28px;height:28px;margin-left:-14px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:16px;border:3px solid #fff}
+.ctlgrp{display:grid;grid-template-columns:1fr;grid-template-rows:minmax(0,1fr) minmax(0,1.7fr);gap:8px;padding:8px;background:var(--panel);min-height:0}
+.ctl{position:relative;min-height:0;border:none;border-radius:20px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px;
+  touch-action:none;font:700 15px 'Barlow Condensed',sans-serif;letter-spacing:.5px;text-transform:uppercase;color:#fff;box-shadow:inset 0 -6px 0 rgba(0,0,0,.25);transition:transform .05s,filter .1s}
+.ctl svg{width:34px;height:34px;flex:none;pointer-events:none}
+.ctl.big svg{width:56px;height:56px}
+.ctl span{pointer-events:none}
+.ctl.down{transform:scale(.94);filter:brightness(1.25)}
+#bFwd{background:#2bb24c}#bBack{background:#2f78c8}#bBrake{background:#d23a30}#bHorn{background:#e5a21a}
+#bAct{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);width:clamp(120px,30vmin,200px);height:clamp(96px,24vmin,150px);border:5px solid #fff;border-radius:28px;
+  background:#8a55d6;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;touch-action:none;
+  font:700 clamp(18px,4.2vmin,26px) 'Barlow Condensed',sans-serif;text-transform:uppercase;box-shadow:0 6px 0 rgba(0,0,0,.3);animation:actPulse 1s infinite;z-index:3}
+#bAct svg{width:clamp(40px,11vmin,64px);height:clamp(40px,11vmin,64px);pointer-events:none}
+#bAct span{pointer-events:none;display:flex}
+#bAct.down{filter:brightness(1.25)}
+@keyframes actPulse{0%,100%{transform:translateX(-50%) scale(1);box-shadow:0 0 0 0 rgba(255,210,63,.95),0 6px 0 rgba(0,0,0,.3)}50%{transform:translateX(-50%) scale(1.07);box-shadow:0 0 0 12px rgba(255,210,63,.25),0 6px 0 rgba(0,0,0,.3)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(255,210,63,.95)}50%{box-shadow:0 0 0 6px rgba(255,210,63,.3)}}
+#top{position:absolute;left:6px;right:6px;top:6px;display:flex;gap:6px;align-items:center;pointer-events:none}
+.chip{background:rgba(20,32,46,.8);border-radius:12px;padding:3px 10px;font:700 20px 'Barlow Condensed',sans-serif;white-space:nowrap}
+#prog{position:relative;flex:1;height:36px;background:rgba(20,32,46,.55);border-radius:12px;min-width:0}
+#progLine{position:absolute;left:14px;right:14px;top:16px;height:4px;background:rgba(255,255,255,.35);border-radius:3px}
+#progIn{position:absolute;left:18px;right:18px;top:0;bottom:0}
+.pS{position:absolute;top:5px;width:26px;height:26px;margin-left:-13px;border-radius:50%;background:#fff;display:grid;place-items:center;font-size:14px;border:3px solid #fff}
 .pS.done{background:#b7f0c3;border-color:#2bb24c}
 .pS.nx{border-color:var(--accent);animation:pulse 1s infinite}
-#pT{position:absolute;top:2px;font-size:24px;margin-left:-12px;transform:scaleX(-1);filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
-.ib{pointer-events:auto;width:42px;height:40px;border-radius:12px;border:none;background:rgba(20,32,46,.8);display:grid;place-items:center;padding:0;font-size:20px}
+#pT{position:absolute;top:1px;font-size:22px;margin-left:-11px;transform:scaleX(-1);filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+.ib{pointer-events:auto;width:40px;height:36px;border-radius:12px;border:none;background:rgba(20,32,46,.8);display:grid;place-items:center;padding:0;font-size:19px}
 .ib.off{opacity:.45}
-#hint{position:absolute;left:50%;top:58px;transform:translateX(-50%);background:#fff;color:#1b2a3a;border:4px solid var(--accent);padding:6px 18px;border-radius:18px;
-  font:700 clamp(18px,2.6vw,26px) 'Barlow Condensed',sans-serif;max-width:94%;text-align:center;pointer-events:none;box-shadow:0 4px 0 rgba(0,0,0,.2)}
+#hint{position:absolute;left:50%;top:50px;transform:translateX(-50%);background:#fff;color:#1b2a3a;border:4px solid var(--accent);padding:4px 16px;border-radius:16px;
+  font:700 clamp(16px,3.6vmin,26px) 'Barlow Condensed',sans-serif;max-width:94%;width:max-content;text-align:center;pointer-events:none;box-shadow:0 4px 0 rgba(0,0,0,.2)}
 #hint:empty{display:none}
-#toast{position:absolute;left:50%;bottom:16px;transform:translate(-50%,10px);background:#2bb24c;color:#fff;padding:8px 22px;border-radius:16px;font:700 24px 'Barlow Condensed',sans-serif;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
-#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.8);background:#2bb24c;color:#fff;padding:8px 22px;border-radius:16px;font:700 clamp(20px,5vmin,30px) 'Barlow Condensed',sans-serif;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;white-space:nowrap}
+#toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+/* small landscape phones */
+@media (orientation:landscape) and (max-height:500px){
+  .ctl{border-radius:16px;font-size:14px}
+  .ctl svg{width:28px;height:28px}.ctl.big svg{width:48px;height:48px}
+  .chip{font-size:17px;padding:2px 8px}
+  .ib{width:34px;height:32px;font-size:16px}
+  #prog{height:32px}.pS{width:22px;height:22px;margin-left:-11px;font-size:12px;top:5px;border-width:2px}#progLine{top:14px}#pT{font-size:19px}
+  #hint{top:44px}
+  #bAct{width:clamp(110px,24vmin,150px);height:clamp(78px,22vmin,104px);bottom:4px;border-width:4px}
+  #bAct svg{width:38px;height:38px}
+}
+/* portrait phones */
 @media (orientation:portrait){
-  #game{grid-template-areas:"stage" "l" "r";grid-template-columns:1fr;grid-template-rows:min(112vw,62dvh) minmax(90px,1fr) minmax(90px,1fr)}
-  #ctlR{padding-top:0}
-  .ctl{min-height:0;height:100%;font-size:18px}
-  .ctl svg{width:48px;height:48px}
+  #game{grid-template-areas:"stage stage" "l r";grid-template-columns:1fr 1fr;grid-template-rows:min(115vw,60%) minmax(0,1fr)}
+  .ctlgrp{grid-template-rows:minmax(0,1fr) minmax(0,1.5fr)}
+  #ctlL{padding-right:4px}#ctlR{padding-left:4px}
+  .ctl{font-size:18px}.ctl svg{width:40px;height:40px}.ctl.big svg{width:64px;height:64px}
   #top{flex-wrap:wrap}
-  #prog{order:5;flex-basis:100%;height:38px}
+  #prog{order:5;flex-basis:100%}
   .chip{margin-right:auto}
-  #hint{top:100px;font-size:20px}
+  #hint{top:88px}
 }
-@media (orientation:landscape) and (max-height:540px){
-  #game{grid-template-areas:"l stage r";grid-template-columns:clamp(150px,22vw,210px) 1fr clamp(110px,16vw,160px);grid-template-rows:1fr}
-  .ctlgrp{padding:8px 6px;gap:8px}
-  #ctlL{grid-template-columns:1fr 1fr;grid-template-rows:2fr 1fr}
-  #ctlL #bBrake{grid-column:span 2;order:3}
-  #ctlR{grid-template-columns:1fr;grid-template-rows:1fr 1.5fr}
-  .ctl{min-height:0}
-  #hint{top:54px;font-size:18px}
-  .chip{font-size:18px}
-}
-
 /* ===== END ===== */
 #endOv{position:fixed;inset:0;background:rgba(10,16,24,.6);display:flex;align-items:center;justify-content:center;padding:16px;z-index:9}
 .ecard{background:#fff;color:#1b2a3a;border-radius:26px;padding:24px;max-width:420px;width:100%;text-align:center;box-shadow:0 10px 0 rgba(0,0,0,.25)}
@@ -134,15 +140,15 @@ button{font-family:inherit;color:inherit;cursor:pointer}
     </div>
     <div id="hint"></div>
     <div id="toast"></div>
+    <button id="bAct" class="hidden"><span id="actIcon"></span><span id="actLbl">Action</span></button>
   </div>
   <div id="ctlL" class="ctlgrp">
-    <button class="ctl" id="bBack"><svg viewBox="0 0 32 32" fill="#fff"><path d="M21 5 7 16l14 11z"/></svg>Reculer</button>
-    <button class="ctl" id="bBrake"><svg viewBox="0 0 32 32" fill="#fff"><rect x="8" y="8" width="16" height="16" rx="3"/></svg>Stop</button>
-    <button class="ctl" id="bFwd"><svg viewBox="0 0 32 32" fill="#fff"><path d="M11 5l14 11-14 11z"/></svg>Avancer</button>
+    <button class="ctl" id="bHorn"><svg viewBox="0 0 32 32" fill="#fff"><path d="M4 13h5l14-7v20L9 19H4z"/><path d="M26 11v10" stroke="#fff" stroke-width="2.6"/></svg><span>Klaxon</span></button>
+    <button class="ctl big" id="bBack"><svg viewBox="0 0 32 32" fill="#fff"><path d="M21 5 7 16l14 11z"/></svg><span>Reculer</span></button>
   </div>
   <div id="ctlR" class="ctlgrp">
-    <button class="ctl" id="bHorn"><svg viewBox="0 0 32 32" fill="#fff"><path d="M4 13h5l14-7v20L9 19H4z"/><path d="M26 11v10" stroke="#fff" stroke-width="2.6"/></svg>Klaxon</button>
-    <button class="ctl" id="bAct" disabled><span id="actIcon"></span><span id="actLbl">Action</span></button>
+    <button class="ctl" id="bBrake"><svg viewBox="0 0 32 32" fill="#fff"><rect x="8" y="8" width="16" height="16" rx="3"/></svg><span>Stop</span></button>
+    <button class="ctl big" id="bFwd"><svg viewBox="0 0 32 32" fill="#fff"><path d="M11 5l14 11-14 11z"/></svg><span>Avancer</span></button>
   </div>
 </section>
 
@@ -474,7 +480,8 @@ const ZC={grass:{bg:'#8fb36a',fg:'#7ca35a'},forest:{bg:'#6f9a55',fg:'#5f8a4a'},s
 /* ====================== voice ====================== */
 const Voice={on:true,v:null,
   init(){ try{ const p=()=>{ const vs=speechSynthesis.getVoices(); this.v=vs.find(v=>/^fr(-|_)FR/i.test(v.lang))||vs.find(v=>/^fr/i.test(v.lang))||null; }; p(); speechSynthesis.onvoiceschanged=p; }catch(e){} },
-  say(t){ if(!this.on||!t) return; try{ speechSynthesis.cancel(); const u=new SpeechSynthesisUtterance(t); u.lang='fr-FR'; if(this.v) u.voice=this.v; u.rate=1; u.pitch=1.1; speechSynthesis.speak(u); }catch(e){} },
+  say(t){ if(!this.on||!t) return; try{ const go=()=>{ const u=new SpeechSynthesisUtterance(t); u.lang='fr-FR'; if(this.v) u.voice=this.v; u.rate=1; u.pitch=1.1; speechSynthesis.speak(u); };
+    if(speechSynthesis.speaking||speechSynthesis.pending){ speechSynthesis.cancel(); setTimeout(go,90); } else go(); }catch(e){} },
   stop(){ try{ speechSynthesis.cancel(); }catch(e){} }
 };
 Voice.init();
@@ -483,7 +490,7 @@ Voice.init();
 let ROUTE=ROUTES[0], LOCO=LOCOS[0], COLOR=COLORS[0];
 try{ const sv=JSON.parse(localStorage.getItem('boubouKid')||'null'); if(sv){ ROUTE=ROUTES.find(r=>r.id===sv.r)||ROUTE; LOCO=LOCOS.find(l=>l.id===sv.l)||LOCO; if(/^#[0-9a-f]{6}$/i.test(sv.c)) COLOR=sv.c; } }catch(e){}
 function save(){ try{ localStorage.setItem('boubouKid',JSON.stringify({r:ROUTE.id,l:LOCO.id,c:COLOR})); }catch(e){} }
-function prep(cv){ const dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight; if(!w||!h) return null; cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); return {c:cv.getContext('2d'),w,h,dpr}; }
+function prep(cv){ const dpr=Math.min(2,window.devicePixelRatio||1), w=cv.clientWidth, h=cv.clientHeight; if(!w||!h) return null; cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); return {c:cv.getContext('2d'),w,h,dpr}; }
 function pTrack(c,len){ c.fillStyle='#8f8a80'; c.fillRect(-14,0,len+28,9); c.fillStyle='#b5b0a6'; for(let x=-10;x<len+14;x+=14) c.fillRect(x,1,8,4); c.fillStyle='#6f7278'; c.fillRect(-14,-3,len+28,3.5); }
 function sampleWagon(t){ const w={type:t,cargo:null,seats:Array(8).fill(null),tank:null};
   if(t==='logs') w.cargo={cargo:'logs',seed:.2}; if(t==='crates') w.cargo={cargo:'crates',seed:.3}; if(t==='cont') w.cargo={cargo:'containers',color:'#2c5a83',seed:.4};
@@ -751,8 +758,8 @@ function updateHud(){
   // action button
   const s=curStop(), ai=s&&!s.done?actionInfo(s):null, ready=!!(ai&&!G.job&&!G.ended);
   const key=(ai?ai.icon+ai.label:'none')+ready;
-  if(key!==lastAct){ lastAct=key; const b=$('bAct'); b.disabled=!ai||!!G.job; b.classList.toggle('ready',ready);
-    $('actIcon').innerHTML=ICONS[ai?ai.icon:'hand']; $('actLbl').textContent=ai?ai.label:'Action'; }
+  if(key!==lastAct){ lastAct=key; const b=$('bAct'); b.classList.toggle('hidden',!ready);
+    $('actIcon').innerHTML=ICONS[ai?ai.icon:'hand']; $('actLbl').textContent=ai?ai.label:''; }
   // hint
   const h=computeHint(); if(h.k!==G.hintKey){ G.hintKey=h.k; $('hint').innerHTML=h.html; if(h.say) Voice.say(h.say); }
 }
@@ -776,9 +783,9 @@ function computeHint(){
 const cv=$('cv'), ctx=cv.getContext('2d');
 let VW=640;
 function render(){
-  const dpr=window.devicePixelRatio||1, w=cv.clientWidth, h=cv.clientHeight; if(!w||!h) return;
+  const dpr=Math.min(2,window.devicePixelRatio||1), w=cv.clientWidth, h=cv.clientHeight; if(!w||!h) return;
   if(cv.width!==Math.round(w*dpr)||cv.height!==Math.round(h*dpr)){ cv.width=Math.round(w*dpr); cv.height=Math.round(h*dpr); }
-  const scale=Math.min(h/400,w/(h>w*1.05?450:640)), vw=w/scale, vh=h/scale, oy=vh-400; VW=vw;
+  const scale=Math.min(h/400,w/(h>w*1.05?450:560)), vw=w/scale, vh=h/scale, oy=vh-400; VW=vw;
   const center=G.pos-TL/2;
   let focus=center+Math.max(-vw*.2,Math.min(vw*.2,G.speed*.6));
   const s=curStop()||(STOPS[G.next]&&STOPS[G.next].target-G.pos<600&&STOPS[G.next].target-G.pos>-10?STOPS[G.next]:null);
@@ -1020,6 +1027,9 @@ $('bAct').addEventListener('pointerdown',e=>{ e.preventDefault(); $('bAct').clas
 ['pointerup','pointercancel','pointerleave'].forEach(ev=>$('bAct').addEventListener(ev,()=>$('bAct').classList.remove('down')));
 $('bAct').addEventListener('contextmenu',e=>e.preventDefault());
 document.addEventListener('gesturestart',e=>e.preventDefault());
+['bFwd','bBack','bBrake','bHorn','bAct'].forEach(id=>{ const el=$(id); el.addEventListener('touchstart',e=>{ if(e.cancelable) e.preventDefault(); },{passive:false}); el.addEventListener('touchend',e=>{ if(e.cancelable) e.preventDefault(); Sound.init(); },{passive:false}); });
+let lastTouchEnd=0; document.addEventListener('touchend',e=>{ const n=Date.now(); if(n-lastTouchEnd<350&&e.cancelable&&!$('game').classList.contains('hidden')) e.preventDefault(); lastTouchEnd=n; },{passive:false});
+document.addEventListener('dblclick',e=>e.preventDefault());
 $('game').addEventListener('touchmove',e=>e.preventDefault(),{passive:false});
 const KEYMAP={ArrowRight:'fwd',KeyD:'fwd',ArrowLeft:'back',KeyA:'back',KeyQ:'back',ArrowDown:'brake',KeyS:'brake'};
 window.addEventListener('keydown',e=>{ if(!G.active||G.ended) return;
@@ -1031,7 +1041,7 @@ window.addEventListener('blur',()=>{ input.fwd=input.back=input.brake=false; if(
 
 function startGame(){
   $('menu').classList.add('hidden'); $('endOv').classList.add('hidden'); $('game').classList.remove('hidden');
-  Sound.init(); newGame(); lastAct=''; Sound.startEngine(LOCO.fx==='steam'?'steam':LOCO.fx==='diesel'?'diesel':'electric');
+  Sound.init(); Voice.say('C’est parti !'); newGame(); lastAct=''; Sound.startEngine(LOCO.fx==='steam'?'steam':LOCO.fx==='diesel'?'diesel':'electric');
 }
 function toMenu(){ G.active=false; Sound.stopEngine(); Sound.setFlow(false); hornRelease(); Voice.stop(); $('game').classList.add('hidden'); $('endOv').classList.add('hidden'); $('menu').classList.remove('hidden'); refreshMenu(); }
 $('startBtn').onclick=startGame; $('againBtn').onclick=startGame; $('backBtn').onclick=toMenu; $('menuBtn').onclick=toMenu;
